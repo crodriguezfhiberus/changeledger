@@ -108,3 +108,4 @@ pierde el paralelismo con la lista de modos del mismo overlay.
 - **2026-10-02T17:19:39Z** `[status]` in-progress → in-review
 - **2026-10-02T17:19:46Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR3 sobre dev..bf1fc11 (templates/contract/close.md, templates/contract/agent-prompts/graduation-review.md, test/context.test.mjs). La implementación la hizo el orquestador.
 - **2026-10-02T17:25:48Z** `[review]` in-review → in-validation (delegated subagent, clean context)
+- **2026-10-02T17:25:49Z** `[note]` Seguimientos de la revisión (no bloquean): los huecos del guard 19 (40/30/20) toleran la redacción actual pero no un reordenamiento como «extends, creates or corrects specs»; el comentario «in any order» describe el rol y --into, no los verbos. La spec lifecycle sigue diciendo «crea o corrige» y se reconcilia al cerrar.
