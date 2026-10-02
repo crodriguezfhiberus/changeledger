@@ -485,8 +485,14 @@ Un clon fresco trae la ref solo como copia remote-tracking, y
 `changeledger activate` la siembra (`seedStateRef`, `20260811-163203`): CAS
 de creación contra ausencia con el árbol leído y validado ANTES de que la
 ref exista. `sync` en un repo con la ref presente y sin activar es no-op que
-nombra `activate` — el paso manual único por clon nunca es invisible y un
-fetch jamás cambia el modo de operación de un repo.
+nombra `activate`. Si falta la ref local pero existe la copia remote-tracking
+del remoto que resuelve `resolveRemote` —el mismo que usa `activate`—, `sync` y
+`sync --status` también son no-op que nombran `activate` y dicen que ese remoto
+publica estado global (`publishedTrackingRef`, `src/commands/sync.mjs`). No
+hacen fetch ni escriben refs o ficheros. Si `resolveRemote` no puede decidir el
+remoto, conservan el mensaje de que no hay nada que sincronizar. Así el paso
+manual único por clon nunca es invisible y un fetch jamás cambia el modo de
+operación de un repo.
 
 El invariante del store es uno y ahora es uniforme (`20260811-163205`): la
 ref nunca apunta a una revisión que ningún lector pueda cargar — todo camino
