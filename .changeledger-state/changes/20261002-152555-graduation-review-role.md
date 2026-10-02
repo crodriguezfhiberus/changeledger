@@ -183,9 +183,10 @@ Estado actual, verificado en `dev`:
   - **Verify:** `node --test test/lifecycle.test.mjs`
   - **Criteria:** CR8
   - **Resolved:** `2026-10-02T16:12:53Z`
-- [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
+- [x] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T16:12:54Z`
 
 ## Log
 - **2026-10-02T15:33:40Z** `[status]` draft → approved (human via conversation)
