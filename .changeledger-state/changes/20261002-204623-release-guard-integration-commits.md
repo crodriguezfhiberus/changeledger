@@ -95,10 +95,11 @@ comparte con `dev` ya está en `main`.
 
 ## Plan
 
-- [ ] Test en rojo de CR1 y regresiones de CR2–CR5
+- [x] Test en rojo de CR1 y regresiones de CR2–CR5
   - **Target:** `test/agent.test.mjs`
   - **Verify:** `node --test test/agent.test.mjs`
   - **Criteria:** CR1, CR2, CR3, CR4, CR5
+  - **Resolved:** `2026-10-02T21:01:08Z`
 - [ ] Comprobación del merge-base con la rama de integración en la guarda de
   arranque
   - **Target:** `src/commands/agent.mjs`
