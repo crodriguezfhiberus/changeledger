@@ -227,10 +227,11 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/agent-context.test.mjs`
   - **Criteria:** CR5
   - **Resolved:** `2026-10-02T13:56:55Z`
-- [ ] Tipo `documentation` e impacto `none` en la plantilla
+- [x] Tipo `documentation` e impacto `none` en la plantilla
   - **Target:** `templates/config.yml`
   - **Verify:** `node --test test/cli-bin.test.mjs`
   - **Criteria:** CR7
+  - **Resolved:** `2026-10-02T13:56:56Z`
 - [ ] Recorrido de extremo a extremo de un change `documentation` sin Plan
   - **Target:** `test/lifecycle.test.mjs`
   - **Verify:** `node --test test/lifecycle.test.mjs`
