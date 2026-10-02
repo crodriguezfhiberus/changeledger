@@ -110,11 +110,12 @@ graduación.
 
 ## Plan
 
-- [ ] `scaffoldSpec` usa `types.<tipo>.seed_stage` si está declarada; si no,
+- [x] `scaffoldSpec` usa `types.<tipo>.seed_stage` si está declarada; si no,
   conserva el orden actual
   - **Target:** `src/commands/graduate.mjs`
   - **Verify:** `node --test test/graduate.test.mjs`
   - **Criteria:** CR1, CR2
+  - **Resolved:** `2026-10-02T15:13:00Z`
 - [ ] Validación de `seed_stage` contra las fases activas del tipo
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
