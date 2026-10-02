@@ -106,9 +106,10 @@ comparte con `dev` ya está en `main`.
   - **Verify:** `node --test test/agent.test.mjs`
   - **Criteria:** CR1, CR2, CR3, CR5
   - **Resolved:** `2026-10-02T21:01:10Z`
-- [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
+- [x] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T21:01:11Z`
 
 ## Log
 - **2026-10-02T20:46:23Z** `[version]` 0.18.0-dev
