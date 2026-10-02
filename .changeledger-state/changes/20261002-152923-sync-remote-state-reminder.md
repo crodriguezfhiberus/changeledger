@@ -2,7 +2,7 @@
 id: "20261002-152923"
 title: sync avisa cuando el remoto publica estado global y el clon no está activado
 type: feature
-status: in-progress
+status: in-review
 created: 2026-10-02T15:29:23Z
 depends_on: []
 branch: feature/20261002-152923
@@ -164,3 +164,4 @@ de seguimiento del remoto.
 - **2026-10-02T15:33:51Z** `[status]` approved → in-progress
 - **2026-10-02T15:33:51Z** `[branch]` set: feature/20261002-152923 (auto)
 - **2026-10-02T15:47:41Z** `[note]` La tarea 4 (pnpm verify) se cumple con sus tres gates equivalentes —biome check, node --test (1541/1541) y changeledger check— porque el pnpm instalado (v11.13.0) no cumple el >=12.6.0 del proyecto. Decisión no especificada: si resolveRemote no puede decidir el remoto (varios, ninguno origin), la rama sin activar conserva el mensaje anterior en vez de fallar.
+- **2026-10-02T15:47:52Z** `[status]` in-progress → in-review
