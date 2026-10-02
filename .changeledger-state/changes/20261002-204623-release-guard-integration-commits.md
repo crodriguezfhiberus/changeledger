@@ -2,7 +2,7 @@
 id: "20261002-204623"
 title: La guarda de arranque deja pasar ramas de release creadas desde la rama de integración
 type: bug
-status: in-validation
+status: done
 created: 2026-10-02T20:46:23Z
 depends_on: []
 branch: bug/20261002-204623
@@ -124,3 +124,4 @@ comparte con `dev` ya está en `main`.
 - **2026-10-02T21:22:36Z** `[note]` Mandato de revisión (confirmación, ronda 2): la corrección sin commitear sobre c6ec722 —merge-base --all con todas las bases en la rama de integración del change, el test criss-cross, los comentarios reescritos y los dos mensajes de fallo cerrado (ref local ausente, historias sin relación)— y cualquier regresión que introduzca.
 - **2026-10-02T21:31:25Z** `[review]` in-review → in-validation (delegated subagent, clean context)
 - **2026-10-02T21:31:26Z** `[note]` Seguimientos de la revisión (fuera del change, ya presentes en c6ec722): una etiqueta llamada dev sombrea a la rama en ambas comprobaciones (resolver refs/heads/<nombre> lo cerraría); un cherry-pick de trabajo de dev no se detecta, y el comentario no lo afirma.
+- **2026-10-02T21:33:56Z** `[validation]` in-validation → done (human accepted via conversation)
