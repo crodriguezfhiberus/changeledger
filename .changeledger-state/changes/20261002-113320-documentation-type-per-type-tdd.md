@@ -222,10 +222,11 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR4
   - **Resolved:** `2026-10-02T13:56:53Z`
-- [ ] Tdd del change seleccionado en `buildAgentContext`
+- [x] Tdd del change seleccionado en `buildAgentContext`
   - **Target:** `src/commands/agent-context.mjs`
   - **Verify:** `node --test test/agent-context.test.mjs`
   - **Criteria:** CR5
+  - **Resolved:** `2026-10-02T13:56:55Z`
 - [ ] Tipo `documentation` e impacto `none` en la plantilla
   - **Target:** `templates/config.yml`
   - **Verify:** `node --test test/cli-bin.test.mjs`
