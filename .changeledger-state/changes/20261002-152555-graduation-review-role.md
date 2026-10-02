@@ -2,9 +2,10 @@
 id: "20261002-152555"
 title: Revisión independiente de la reconciliación de specs al cerrar
 type: feature
-status: approved
+status: in-progress
 created: 2026-10-02T15:25:55Z
 depends_on: []
+branch: feature/20261002-152555
 related_to: ["20261002-113320", "20261002-113435"]
 owner: Carlos Rodríguez
 release_impact: minor
@@ -182,3 +183,5 @@ Estado actual, verificado en `dev`:
 
 ## Log
 - **2026-10-02T15:33:40Z** `[status]` draft → approved (human via conversation)
+- **2026-10-02T15:53:14Z** `[status]` approved → in-progress
+- **2026-10-02T15:53:14Z** `[branch]` set: feature/20261002-152555 (auto)
