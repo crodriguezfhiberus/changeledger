@@ -193,10 +193,11 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR6
   - **Resolved:** `2026-10-02T18:46:17Z`
-- [ ] `git.release_branch` vacío en la plantilla
+- [x] `git.release_branch` vacío en la plantilla
   - **Target:** `templates/config.yml`
   - **Verify:** `node --test test/cli-bin.test.mjs`
   - **Criteria:** CR7
+  - **Resolved:** `2026-10-02T18:46:18Z`
 - [ ] Reglas de rama en «Git protects traceability», con su concept guard y
   dentro de presupuesto
   - **Target:** `templates/contract/implement.md`
