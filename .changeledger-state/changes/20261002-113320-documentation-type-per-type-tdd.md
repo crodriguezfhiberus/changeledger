@@ -245,3 +245,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T13:03:15Z** `[status]` draft → approved (human via conversation)
 - **2026-10-02T13:33:39Z** `[status]` approved → in-progress
 - **2026-10-02T13:33:39Z** `[branch]` set: feature/20261002-113320 (auto)
+- **2026-10-02T13:56:12Z** `[note]` CR5 corregido durante la implementación: su segundo paso pedía 'agent-context implementation' sin id, que el CLI rechaza ('role implementation requires a change id'). Se reescribe con 'investigation', el único rol sin id, manteniendo la intención: sin change seleccionado se publica el tdd global.
