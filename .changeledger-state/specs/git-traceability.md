@@ -88,9 +88,11 @@ producción. `types.<tipo>.integrates_into` elige por su papel la base y el
 destino de las ramas de change de ese tipo: `integration` (el defecto, también
 cuando la clave falta) o `release`. `changeIntegrationBranch(config, type)`
 (`src/config.mjs`) resuelve esa rama de integración del change:
-`git.release_branch` para un tipo `release` y `git.integration_branch` en
-cualquier otro caso, incluida la llamada sin tipo. Un tipo `release` sin
-`git.release_branch` declarada nunca cae a la rama de integración del repo: lanza
+`git.release_branch` para un tipo `release` y `git.integration_branch` para el
+rol `integration` o un rol ausente, incluida la llamada sin tipo. Un rol
+inválido hace que el resolutor lance el mismo mensaje que reporta `check`. Un
+tipo `release` sin `git.release_branch` declarada nunca cae a la rama de
+integración del repo: lanza
 `type "<t>" integrates into git.release_branch, which is not declared`.
 
 `changeledger context <id>` y `changeledger agent-context <role> <id>` publican
