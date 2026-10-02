@@ -376,7 +376,7 @@ persistente. Cada spec creada o modificada se enlaza individualmente con
 `graduate --into` antes del archivo.
 
 **Revisión de la reconciliación.** En un tipo con `review_required`, cuando el
-cierre crea o corrige specs, el orquestador delega el rol `graduation-review`
+cierre crea, corrige o amplía specs, el orquestador delega el rol `graduation-review`
 una vez redactada la reconciliación y antes del primer `--into`
 (`templates/contract/close.md`); ante hallazgos corrige la redacción y delega de
 nuevo a un revisor nuevo, y registra el resultado con `changeledger log <id>`.
