@@ -2,7 +2,7 @@
 id: "20261002-152923"
 title: sync avisa cuando el remoto publica estado global y el clon no está activado
 type: feature
-status: in-validation
+status: done
 created: 2026-10-02T15:29:23Z
 depends_on: []
 branch: feature/20261002-152923
@@ -168,3 +168,4 @@ de seguimiento del remoto.
 - **2026-10-02T15:48:00Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR7 sobre dev..c82be00 (src/commands/sync.mjs, templates/contract/core.md, test/sync.test.mjs).
 - **2026-10-02T15:53:05Z** `[review]` in-review → in-validation (delegated subagent, clean context)
 - **2026-10-02T15:53:06Z** `[note]` Seguimientos de la revisión (no bloquean): el catch alrededor de resolveRemote también absorbe un fallo de 'git remote' (vuelve al mensaje anterior, como antes del change), así que su comentario se queda corto; con varios remotos sin origin, o con la copia sólo en un remoto distinto del que resuelve sync, no hay aviso (activate tampoco funcionaría ahí); la frase del core se lee como «el remoto que resuelve sync». La fuente del test CR6 se construye a mano, sin cutover real; el revisor confirmó el recorrido con un cutover real.
+- **2026-10-02T16:27:53Z** `[validation]` in-validation → done (human accepted via conversation)
