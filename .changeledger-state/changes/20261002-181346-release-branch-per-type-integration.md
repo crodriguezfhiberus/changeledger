@@ -204,10 +204,11 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR8, CR9
   - **Resolved:** `2026-10-02T18:46:19Z`
-- [ ] Recorrido de extremo a extremo de un change de un tipo de release
+- [x] Recorrido de extremo a extremo de un change de un tipo de release
   - **Target:** `test/lifecycle.test.mjs`
   - **Verify:** `node --test test/lifecycle.test.mjs`
   - **Criteria:** CR10
+  - **Resolved:** `2026-10-02T18:46:20Z`
 - [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
