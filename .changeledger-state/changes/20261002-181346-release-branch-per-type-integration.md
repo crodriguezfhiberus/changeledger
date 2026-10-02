@@ -173,10 +173,11 @@ previo trata la rama de release ni la integración por tipo.
 
 ## Plan
 
-- [ ] `releaseBranch` y `changeIntegrationBranch` en el resolutor de config
+- [x] `releaseBranch` y `changeIntegrationBranch` en el resolutor de config
   - **Target:** `src/config.mjs`
   - **Verify:** `node --test test/config.test.mjs`
   - **Criteria:** CR4
+  - **Resolved:** `2026-10-02T18:46:14Z`
 - [ ] Validación de `git.release_branch` e `integrates_into`
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
