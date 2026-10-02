@@ -2,7 +2,7 @@
 id: "20261002-152555"
 title: Revisión independiente de la reconciliación de specs al cerrar
 type: feature
-status: in-review
+status: in-progress
 created: 2026-10-02T15:25:55Z
 depends_on: []
 branch: feature/20261002-152555
@@ -195,3 +195,4 @@ Estado actual, verificado en `dev`:
 - **2026-10-02T16:12:46Z** `[note]` La tarea 7 (pnpm verify) se cumple con sus tres gates equivalentes —biome check, node --test (1542/1542) y changeledger check— porque el pnpm instalado (v11.13.0) no cumple el >=12.6.0 del proyecto. Durante la mutación, el implementador corrompió y restauró editando la cápsula y close.md; la revisión debe comprobar su integridad. Residual: los ejemplos de ayuda de bin/changeledger.mjs siguen listando cuatro roles de agent-prompt.
 - **2026-10-02T16:13:02Z** `[status]` in-progress → in-review
 - **2026-10-02T16:13:08Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR8 sobre dev..473b445 (src/commands/agent-context.mjs, la cápsula y el esqueleto de graduation-review, templates/contract/close.md, templates/contract/core.md y sus tests).
+- **2026-10-02T16:17:23Z** `[review]` in-review → in-progress (retry): Revisión 1: el comentario del bucle de presupuestos de cápsulas en test/agent-context.test.mjs sigue diciendo «four … all four» aunque el bucle ya mide cinco roles.
