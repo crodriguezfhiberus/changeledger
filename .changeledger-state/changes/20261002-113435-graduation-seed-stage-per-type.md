@@ -131,7 +131,7 @@ graduación.
 - [ ] Origen de la semilla en el paso `--new` del overlay de cierre, con su
   concept guard
   - **Target:** `templates/contract/close.md`
-  - **Verify:** `node --test test/contract.test.mjs`
+  - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR6
 - [ ] Gate completo
   - **Support:**
