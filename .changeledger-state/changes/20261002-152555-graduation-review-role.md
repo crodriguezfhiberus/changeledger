@@ -204,3 +204,4 @@ Estado actual, verificado en `dev`:
 - **2026-10-02T16:27:52Z** `[validation]` in-validation → done (human accepted via conversation)
 - **2026-10-02T16:32:15Z** `[note]` graduation-review de la reconciliación (contract-discovery, lifecycle): recomienda aplicar; confirma cada frase cambiada contra el código y ninguna otra spec contradice el change. Nota cosmética: un salto de línea corto en contract-discovery.
 - **2026-10-02T16:32:17Z** `[graduation]` spec: `contract-discovery.md`
+- **2026-10-02T16:32:18Z** `[graduation]` spec: `lifecycle.md`
