@@ -2,7 +2,7 @@
 id: "20261002-181346"
 title: Rama de release y rama de integración por tipo
 type: feature
-status: in-review
+status: in-validation
 created: 2026-10-02T18:13:46Z
 depends_on: []
 branch: feature/20261002-181346
@@ -225,3 +225,4 @@ previo trata la rama de release ni la integración por tipo.
 - **2026-10-02T18:54:53Z** `[review]` in-review → in-progress (retry): Revisión 1: el comentario de templates/config.yml sobre git: («change branches start from and merge into this branch») es falso con este change, porque los tipos con integrates_into: release salen de git.release_branch y se integran en ella.
 - **2026-10-02T19:03:03Z** `[status]` in-progress → in-review
 - **2026-10-02T19:03:06Z** `[note]` Mandato de revisión (confirmación, ronda 2): la corrección sin commitear sobre 784e473 —el comentario gestionado de git: en templates/config.yml y su copia en setBlankGitSection de src/config-migration.mjs (autorizada por el orquestador para cerrar el defecto en ambos sitios), más los tres pins de test/config-migration.test.mjs— y cualquier regresión que introduzca.
+- **2026-10-02T19:08:58Z** `[review]` in-review → in-validation (delegated subagent, clean context)
