@@ -90,10 +90,11 @@ pierde el paralelismo con la lista de modos del mismo overlay.
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR1, CR3
   - **Resolved:** `2026-10-02T17:19:29Z`
-- [ ] Descripción de `{{specs}}` en el esqueleto
+- [x] Descripción de `{{specs}}` en el esqueleto
   - **Target:** `templates/contract/agent-prompts/graduation-review.md`
   - **Verify:** `node --test test/agent-prompt.test.mjs`
   - **Criteria:** CR2, CR3
+  - **Resolved:** `2026-10-02T17:19:30Z`
 - [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
