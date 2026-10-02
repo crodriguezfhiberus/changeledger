@@ -2,7 +2,7 @@
 id: "20261002-181346"
 title: Rama de release y rama de integración por tipo
 type: feature
-status: in-progress
+status: in-review
 created: 2026-10-02T18:13:46Z
 depends_on: []
 branch: feature/20261002-181346
@@ -223,3 +223,4 @@ previo trata la rama de release ni la integración por tipo.
 - **2026-10-02T18:46:29Z** `[status]` in-progress → in-review
 - **2026-10-02T18:46:39Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR10 sobre dev..784e473 (src/config.mjs, src/check.mjs, src/commands/agent.mjs, src/commands/context.mjs, templates/config.yml, templates/contract/implement.md y sus tests).
 - **2026-10-02T18:54:53Z** `[review]` in-review → in-progress (retry): Revisión 1: el comentario de templates/config.yml sobre git: («change branches start from and merge into this branch») es falso con este change, porque los tipos con integrates_into: release salen de git.release_branch y se integran en ella.
+- **2026-10-02T19:03:03Z** `[status]` in-progress → in-review
