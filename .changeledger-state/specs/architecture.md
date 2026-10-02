@@ -474,9 +474,10 @@ no es colisión.
 Nunca bloqueante y desacoplado: sin remoto es no-op informativo; un fallo de
 red es aviso con exit 0 (el push rechazado por carrera sí es exit distinto de
 cero: el remoto está vivo y la orden es re-ejecutar, sin pérdida local);
-ningún otro comando consulta ni espera a sync. `sync --status` es offline
-puro: enumera las copias remote-tracking existentes de la ref
-(`for-each-ref`, sin resolver ningún remoto — `20260811-163204`) y reporta la
+ningún otro comando consulta ni espera a sync. En un repo activado,
+`sync --status` es offline puro: enumera las copias remote-tracking existentes
+de la ref (`for-each-ref`, sin resolver ningún remoto — `20260811-163204`) y
+reporta la
 relación por cada una desde el último fetch, que el push exitoso avanza para
 no quedar stale.
 
@@ -485,12 +486,14 @@ Un clon fresco trae la ref solo como copia remote-tracking, y
 `changeledger activate` la siembra (`seedStateRef`, `20260811-163203`): CAS
 de creación contra ausencia con el árbol leído y validado ANTES de que la
 ref exista. `sync` en un repo con la ref presente y sin activar es no-op que
-nombra `activate`. Si falta la ref local pero existe la copia remote-tracking
-del remoto que resuelve `resolveRemote` —el mismo que usa `activate`—, `sync` y
-`sync --status` también son no-op que nombran `activate` y dicen que ese remoto
-publica estado global (`publishedTrackingRef`, `src/commands/sync.mjs`). No
-hacen fetch ni escriben refs o ficheros. Si `resolveRemote` no puede decidir el
-remoto, conservan el mensaje de que no hay nada que sincronizar. Así el paso
+nombra `activate`. En un repo sin activar al que le falta la ref local pero
+tiene la copia remote-tracking del remoto que resuelve `resolveRemote` —el mismo
+que usa `activate`—, `sync` y `sync --status` también son no-op que nombran
+`activate` y dicen que ese remoto publica estado global (`publishedTrackingRef`,
+`src/commands/sync.mjs`); sólo leen refs locales, sin fetch ni escrituras de
+refs o ficheros. Si no hay remoto, si hay varios y ninguno es `origin` o si
+falla `git remote`, conservan el mensaje de que no hay nada que sincronizar; una
+copia que sólo existe bajo otro remoto no produce aviso. Así el paso
 manual único por clon nunca es invisible y un fetch jamás cambia el modo de
 operación de un repo.
 
