@@ -138,10 +138,11 @@ de seguimiento del remoto.
 
 ## Plan
 
-- [ ] Aviso de la copia de seguimiento en la rama sin activar de `sync()`
+- [x] Aviso de la copia de seguimiento en la rama sin activar de `sync()`
   - **Target:** `src/commands/sync.mjs`
   - **Verify:** `node --test test/sync.test.mjs`
   - **Criteria:** CR1, CR2, CR3, CR4, CR5
+  - **Resolved:** `2026-10-02T15:47:42Z`
 - [ ] Recorrido clonar → sync → activate → sync --status
   - **Target:** `test/sync.test.mjs`
   - **Verify:** `node --test test/sync.test.mjs`
