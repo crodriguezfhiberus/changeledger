@@ -2,7 +2,7 @@
 id: "20261002-165630"
 title: Ayuda del CLI y README con el rol graduation-review
 type: quick
-status: in-validation
+status: done
 created: 2026-10-02T16:56:30Z
 depends_on: []
 branch: quick/20261002-165630
@@ -32,3 +32,4 @@ contrato, las specs y cualquier comportamiento. Se revierte con el commit.
 - **2026-10-02T17:02:53Z** `[status]` approved → in-progress
 - **2026-10-02T17:02:53Z** `[branch]` set: quick/20261002-165630 (auto)
 - **2026-10-02T17:06:02Z** `[status]` in-progress → in-validation
+- **2026-10-02T17:08:40Z** `[validation]` in-validation → done (human accepted via conversation)
