@@ -121,10 +121,11 @@ graduación.
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR3
   - **Resolved:** `2026-10-02T15:13:01Z`
-- [ ] `seed_stage: investigation` en el tipo `documentation` de la plantilla
+- [x] `seed_stage: investigation` en el tipo `documentation` de la plantilla
   - **Target:** `templates/config.yml`
   - **Verify:** `node --test test/cli-bin.test.mjs`
   - **Criteria:** CR4
+  - **Resolved:** `2026-10-02T15:13:02Z`
 - [ ] Recorrido de extremo a extremo de la graduación de un change
   `documentation`
   - **Target:** `test/graduate.test.mjs`
