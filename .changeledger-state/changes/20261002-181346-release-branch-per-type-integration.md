@@ -2,9 +2,10 @@
 id: "20261002-181346"
 title: Rama de release y rama de integración por tipo
 type: feature
-status: approved
+status: in-progress
 created: 2026-10-02T18:13:46Z
 depends_on: []
+branch: feature/20261002-181346
 related_to: ["20260711-210115", "20260731-161655", "20261002-113320"]
 owner: Carlos Rodríguez
 release_impact: minor
@@ -208,3 +209,5 @@ previo trata la rama de release ni la integración por tipo.
 ## Log
 - **2026-10-02T18:13:46Z** `[version]` 0.18.0-dev
 - **2026-10-02T18:20:47Z** `[status]` draft → approved (human via conversation)
+- **2026-10-02T18:20:51Z** `[status]` approved → in-progress
+- **2026-10-02T18:20:51Z** `[branch]` set: feature/20261002-181346 (auto)
