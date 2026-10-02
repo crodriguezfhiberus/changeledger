@@ -2,7 +2,7 @@
 id: "20261002-113320"
 title: Tipo de change documentation y tdd por tipo
 type: feature
-status: in-review
+status: in-validation
 created: 2026-10-02T11:33:20Z
 depends_on: []
 branch: feature/20261002-113320
@@ -259,3 +259,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T14:04:25Z** `[review]` in-review → in-progress (retry): Revisión 1: el concept guard de CR9 está fuera de la tabla curada CONCEPT_GUARDS (cuyo recuento queda desfasado) y su comentario afirma que tolera reescrituras, lo que es falso (selector anclado al inicio del párrafo; 'blocked' exigido en la misma cláusula). Limpieza: servesReadiness mal nombrado y comentario de transversalPolicy desfasado en context.mjs.
 - **2026-10-02T14:12:43Z** `[status]` in-progress → in-review
 - **2026-10-02T14:12:49Z** `[note]` Mandato de revisión (confirmación, ronda 2): la corrección sin commitear sobre d8b94c9 — los defectos nombrados en la ronda 1 (guard de CR9 en CONCEPT_GUARDS y tolerante a la redacción, comentario veraz, servesReadiness y comentario de transversalPolicy) y cualquier regresión que introduzca.
+- **2026-10-02T14:18:02Z** `[review]` in-review → in-validation (delegated subagent, clean context)
