@@ -113,3 +113,4 @@ comparte con `dev` ya está en `main`.
 - **2026-10-02T20:47:04Z** `[status]` draft → approved (human via conversation)
 - **2026-10-02T20:47:06Z** `[status]` approved → in-progress
 - **2026-10-02T20:47:06Z** `[branch]` set: bug/20261002-204623 (auto)
+- **2026-10-02T21:01:07Z** `[note]` Decisiones de implementación: sin merge-base (ref de integración ausente o historias sin relación) la guarda falla cerrada con «branch "<b>" cannot be compared with integration branch "<i>": no merge base found» y no toca el documento. Los tests usan los tipos del fixture existente —fix (release) y feature (integración)— en lugar de hotfix y bug: la guarda depende del rol integrates_into, no del nombre. Gates: biome check limpio; node --test 1717/1718 —el único fallo es 20261001-155612 CR9, preexistente en origin/dev—; changeledger check limpio; pnpm verify no se puede ejecutar (pnpm v11.13.0 < 12.6.0).
