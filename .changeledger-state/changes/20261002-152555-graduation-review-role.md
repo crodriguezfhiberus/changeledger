@@ -173,10 +173,11 @@ Estado actual, verificado en `dev`:
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR5
   - **Resolved:** `2026-10-02T16:12:51Z`
-- [ ] Rol en la lista de `agent-prompt <role>` del core y presupuestos
+- [x] Rol en la lista de `agent-prompt <role>` del core y presupuestos
   - **Target:** `templates/contract/core.md`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR6, CR7
+  - **Resolved:** `2026-10-02T16:12:52Z`
 - [ ] Recorrido de extremo a extremo del cierre con revisión de la reconciliación
   - **Target:** `test/lifecycle.test.mjs`
   - **Verify:** `node --test test/lifecycle.test.mjs`
