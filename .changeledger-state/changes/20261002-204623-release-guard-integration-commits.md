@@ -2,7 +2,7 @@
 id: "20261002-204623"
 title: La guarda de arranque deja pasar ramas de release creadas desde la rama de integración
 type: bug
-status: in-review
+status: in-validation
 created: 2026-10-02T20:46:23Z
 depends_on: []
 branch: bug/20261002-204623
@@ -122,3 +122,4 @@ comparte con `dev` ya está en `main`.
 - **2026-10-02T21:12:09Z** `[review]` in-review → in-progress (retry): Revisión 1: con varias bases de fusión (criss-cross), git merge-base devuelve una sola según fechas y la guarda puede dejar arrancar un hotfix con un commit de dev que no está en main; los comentarios de la guarda y de mergeBase afirman más de lo que el código impone; y, aunque la decisión de fallar cerrado se mantiene, el mensaje con la ref local de integración ausente no dice qué falta.
 - **2026-10-02T21:22:34Z** `[status]` in-progress → in-review
 - **2026-10-02T21:22:36Z** `[note]` Mandato de revisión (confirmación, ronda 2): la corrección sin commitear sobre c6ec722 —merge-base --all con todas las bases en la rama de integración del change, el test criss-cross, los comentarios reescritos y los dos mensajes de fallo cerrado (ref local ausente, historias sin relación)— y cualquier regresión que introduzca.
+- **2026-10-02T21:31:25Z** `[review]` in-review → in-validation (delegated subagent, clean context)
