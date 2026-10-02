@@ -188,10 +188,11 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/agent.test.mjs`
   - **Criteria:** CR3, CR4, CR5
   - **Resolved:** `2026-10-02T18:46:16Z`
-- [ ] Línea de política con la rama del change en `context` y `agent-context`
+- [x] Línea de política con la rama del change en `context` y `agent-context`
   - **Target:** `src/commands/context.mjs`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR6
+  - **Resolved:** `2026-10-02T18:46:17Z`
 - [ ] `git.release_branch` vacío en la plantilla
   - **Target:** `templates/config.yml`
   - **Verify:** `node --test test/cli-bin.test.mjs`
