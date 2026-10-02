@@ -2,9 +2,10 @@
 id: "20261002-171539"
 title: La revisión de la reconciliación cubre también ampliar una spec
 type: feature
-status: approved
+status: in-progress
 created: 2026-10-02T17:15:39Z
 depends_on: []
+branch: feature/20261002-171539
 related_to: ["20261002-152555"]
 owner: Carlos Rodríguez
 release_impact: patch
@@ -98,3 +99,5 @@ pierde el paralelismo con la lista de modos del mismo overlay.
 
 ## Log
 - **2026-10-02T17:16:19Z** `[status]` draft → approved (human via conversation)
+- **2026-10-02T17:16:21Z** `[status]` approved → in-progress
+- **2026-10-02T17:16:21Z** `[branch]` set: feature/20261002-171539 (auto)
