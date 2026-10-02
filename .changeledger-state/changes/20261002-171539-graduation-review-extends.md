@@ -2,7 +2,7 @@
 id: "20261002-171539"
 title: La revisión de la reconciliación cubre también ampliar una spec
 type: feature
-status: draft
+status: approved
 created: 2026-10-02T17:15:39Z
 depends_on: []
 related_to: ["20261002-152555"]
@@ -97,3 +97,4 @@ pierde el paralelismo con la lista de modos del mismo overlay.
   - **Verify:** `pnpm verify`
 
 ## Log
+- **2026-10-02T17:16:19Z** `[status]` draft → approved (human via conversation)
