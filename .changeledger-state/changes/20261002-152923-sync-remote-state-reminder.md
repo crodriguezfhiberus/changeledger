@@ -2,7 +2,7 @@
 id: "20261002-152923"
 title: sync avisa cuando el remoto publica estado global y el clon no está activado
 type: feature
-status: draft
+status: approved
 created: 2026-10-02T15:29:23Z
 depends_on: []
 related_to: ["20260811-151426", "20261002-113320", "20261002-113435"]
@@ -155,3 +155,4 @@ de seguimiento del remoto.
   - **Verify:** `pnpm verify`
 
 ## Log
+- **2026-10-02T15:33:41Z** `[status]` draft → approved (human via conversation)
