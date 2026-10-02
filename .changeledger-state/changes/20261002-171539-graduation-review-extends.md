@@ -95,9 +95,10 @@ pierde el paralelismo con la lista de modos del mismo overlay.
   - **Verify:** `node --test test/agent-prompt.test.mjs`
   - **Criteria:** CR2, CR3
   - **Resolved:** `2026-10-02T17:19:30Z`
-- [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
+- [x] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T17:19:32Z`
 
 ## Log
 - **2026-10-02T17:16:19Z** `[status]` draft → approved (human via conversation)
