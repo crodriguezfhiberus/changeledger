@@ -205,11 +205,12 @@ Los criterios que pide el párrafo:
 
 ## Plan
 
-- [ ] Resolutor único del tdd efectivo por tipo, y validación booleana de
+- [x] Resolutor único del tdd efectivo por tipo, y validación booleana de
   `types.<tipo>.tdd`
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR1, CR2, CR3
+  - **Resolved:** `2026-10-02T13:56:50Z`
 - [ ] Regla de `review_required` condicionada al tdd efectivo del tipo
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
