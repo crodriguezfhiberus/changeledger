@@ -125,3 +125,4 @@ comparte con `dev` ya está en `main`.
 - **2026-10-02T21:31:25Z** `[review]` in-review → in-validation (delegated subagent, clean context)
 - **2026-10-02T21:31:26Z** `[note]` Seguimientos de la revisión (fuera del change, ya presentes en c6ec722): una etiqueta llamada dev sombrea a la rama en ambas comprobaciones (resolver refs/heads/<nombre> lo cerraría); un cherry-pick de trabajo de dev no se detecta, y el comentario no lo afirma.
 - **2026-10-02T21:33:56Z** `[validation]` in-validation → done (human accepted via conversation)
+- **2026-10-02T21:34:54Z** `[note]` graduation-review de la reconciliación (git-traceability): recomienda aplicar; cada frase coincide con assertImplementationBranch y mergeBases, y no queda rastro de la limitación anterior. Matiz no bloqueante: mergeBases devuelve vacío también ante otros fallos de git, y entonces el mensaje diría «shares no history».
