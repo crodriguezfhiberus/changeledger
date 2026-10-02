@@ -101,3 +101,4 @@ pierde el paralelismo con la lista de modos del mismo overlay.
 - **2026-10-02T17:16:19Z** `[status]` draft → approved (human via conversation)
 - **2026-10-02T17:16:21Z** `[status]` approved → in-progress
 - **2026-10-02T17:16:21Z** `[branch]` set: feature/20261002-171539 (auto)
+- **2026-10-02T17:19:27Z** `[note]` Implementado por el orquestador (edición pequeña). Guard 19 en rojo antes de editar close.md ('close no longer delegates graduation-review before the first --into') y en verde después; tres mutantes —quitar creates, corrects o extends de la condición— fallan el guard y cada fichero se restauró idéntico (sha). CR2 se verifica ejecutando agent-prompt graduation-review, sin test que fije la frase (AGENTS.md). Esqueleto: 528 tokens. La tarea 3 (pnpm verify) se cumple con biome check, node --test (1549/1549) y changeledger check, porque el pnpm instalado (v11.13.0) no cumple el >=12.6.0.
