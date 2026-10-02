@@ -216,11 +216,12 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR6
   - **Resolved:** `2026-10-02T13:56:52Z`
-- [ ] Línea de política y omisión de `readiness` según el tdd del change en
+- [x] Línea de política y omisión de `readiness` según el tdd del change en
   `changePolicyBlock` y `fragmentsForType`
   - **Target:** `src/commands/context.mjs`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR4
+  - **Resolved:** `2026-10-02T13:56:53Z`
 - [ ] Tdd del change seleccionado en `buildAgentContext`
   - **Target:** `src/commands/agent-context.mjs`
   - **Verify:** `node --test test/agent-context.test.mjs`
