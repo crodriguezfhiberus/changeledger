@@ -126,11 +126,12 @@ graduación.
   - **Verify:** `node --test test/cli-bin.test.mjs`
   - **Criteria:** CR4
   - **Resolved:** `2026-10-02T15:13:02Z`
-- [ ] Recorrido de extremo a extremo de la graduación de un change
+- [x] Recorrido de extremo a extremo de la graduación de un change
   `documentation`
   - **Target:** `test/graduate.test.mjs`
   - **Verify:** `node --test test/graduate.test.mjs`
   - **Criteria:** CR5
+  - **Resolved:** `2026-10-02T15:13:03Z`
 - [ ] Origen de la semilla en el paso `--new` del overlay de cierre, con su
   concept guard
   - **Target:** `templates/contract/close.md`
