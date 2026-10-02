@@ -185,3 +185,4 @@ Estado actual, verificado en `dev`:
 - **2026-10-02T15:33:40Z** `[status]` draft → approved (human via conversation)
 - **2026-10-02T15:53:14Z** `[status]` approved → in-progress
 - **2026-10-02T15:53:14Z** `[branch]` set: feature/20261002-152555 (auto)
+- **2026-10-02T16:12:46Z** `[note]` La tarea 7 (pnpm verify) se cumple con sus tres gates equivalentes —biome check, node --test (1542/1542) y changeledger check— porque el pnpm instalado (v11.13.0) no cumple el >=12.6.0 del proyecto. Durante la mutación, el implementador corrompió y restauró editando la cápsula y close.md; la revisión debe comprobar su integridad. Residual: los ejemplos de ayuda de bin/changeledger.mjs siguen listando cuatro roles de agent-prompt.
