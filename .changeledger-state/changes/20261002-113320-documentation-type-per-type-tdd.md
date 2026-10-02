@@ -164,7 +164,7 @@ Los criterios que pide el párrafo:
 - **Given** el mismo change y una config con `tdd: true`
 - **When** se ejecuta `changeledger agent-context implementation <id>`
 - **Then** la línea `Effective policy:` contiene `tdd=off`
-- **And** `changeledger agent-context implementation`, sin id, sigue mostrando `tdd=on`
+- **And** `changeledger agent-context investigation`, sin id (el único rol que lo admite), sigue mostrando `tdd=on`
 
 ### CR6 — review_required sin plan cuando tdd está apagado
 - **Given** un tipo con `review_required: true`, `tdd: false` y `stages: [request, investigation, specification, log]`
