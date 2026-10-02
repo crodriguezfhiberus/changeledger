@@ -167,11 +167,12 @@ Estado actual, verificado en `dev`:
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR4
   - **Resolved:** `2026-10-02T16:12:50Z`
-- [ ] Obligación de revisar la reconciliación en el overlay de cierre, con su
+- [x] Obligación de revisar la reconciliación en el overlay de cierre, con su
   concept guard
   - **Target:** `templates/contract/close.md`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR5
+  - **Resolved:** `2026-10-02T16:12:51Z`
 - [ ] Rol en la lista de `agent-prompt <role>` del core y presupuestos
   - **Target:** `templates/contract/core.md`
   - **Verify:** `node --test test/context.test.mjs`
