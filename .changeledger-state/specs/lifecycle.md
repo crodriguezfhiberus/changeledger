@@ -375,13 +375,32 @@ existente posee esa verdad; `--skip` se reserva para cambios que no alteran verd
 persistente. Cada spec creada o modificada se enlaza individualmente con
 `graduate --into` antes del archivo.
 
+**Revisión de la reconciliación.** En un tipo con `review_required`, cuando el
+cierre crea o corrige specs, el orquestador delega el rol `graduation-review`
+una vez redactada la reconciliación y antes del primer `--into`
+(`templates/contract/close.md`); ante hallazgos corrige la redacción y delega de
+nuevo a un revisor nuevo, y registra el resultado con `changeledger log <id>`.
+`--skip` no la requiere. Es una obligación del contrato: ni `graduate` ni
+`check` comprueban que se haya hecho. `changeledger agent-context
+graduation-review <id>` solo carga sobre un change `done` (`ALLOWED_STATUSES`,
+`src/commands/agent-context.mjs`) y entrega una cápsula estrictamente read-only:
+el delegado contrasta el diff de cada spec afectada, tomado del origen que nombra
+su prompt (el journal de estado en un repo activado, el worktree en uno
+inactivo), con el código que cita y con el change aceptado; comprueba las reglas
+de spec —verdad actual sin cronología, ningún CR como estructura, cada
+cuantificador universal cumplido en el código o acotado, lo eliminado obsoleto y
+nada de lo que el change hizo verdad ausente— y devuelve hallazgos con evidencia
+y una única recomendación: aplicar o corregir. No cambia el status, no añade
+entradas al Log ni nombra comandos de lifecycle o graduación. `post-review`
+conserva su restricción a `in-validation`.
+
 Los identificadores de criterios pertenecen al change y no forman parte de la
 estructura durable. Tanto `changeledger check` como `graduate --into` rechazan
 headings Markdown, incluidos Setext y headings anidados, cuyo texto comienza con
 `CR` seguido de dígitos fuera de bloques de código. Las menciones en prosa y los
 ejemplos dentro de código permanecen permitidos.
 
-**Revisión de graduación.** Tras `done`, cada change se resuelve: gradúa a un spec
+**Resolución de graduación.** Tras `done`, cada change se resuelve: gradúa a un spec
 o registra un skip (bug/chore sin verdad persistente). La finalización con
 `--into` y el skip fijan `reviewed: true` (`writer.setReviewed`);
 `changeledger list --pending graduation` lista los `done` con `reviewed !==
