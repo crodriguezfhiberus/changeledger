@@ -152,10 +152,11 @@ Estado actual, verificado en `dev`:
 
 ## Plan
 
-- [ ] Rol `graduation-review` en `AGENT_ROLES`, limitado a `done`
+- [x] Rol `graduation-review` en `AGENT_ROLES`, limitado a `done`
   - **Target:** `src/commands/agent-context.mjs`
   - **Verify:** `node --test test/agent-context.test.mjs`
   - **Criteria:** CR1, CR2
+  - **Resolved:** `2026-10-02T16:12:48Z`
 - [ ] Esqueleto de prompt del rol
   - **Target:** `templates/contract/agent-prompts/graduation-review.md`
   - **Verify:** `node --test test/agent-prompt.test.mjs`
