@@ -2,7 +2,7 @@
 id: "20261002-113320"
 title: Tipo de change documentation y tdd por tipo
 type: feature
-status: in-progress
+status: in-review
 created: 2026-10-02T11:33:20Z
 depends_on: []
 branch: feature/20261002-113320
@@ -254,3 +254,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T13:33:39Z** `[status]` approved → in-progress
 - **2026-10-02T13:33:39Z** `[branch]` set: feature/20261002-113320 (auto)
 - **2026-10-02T13:56:12Z** `[note]` CR5 corregido durante la implementación: su segundo paso pedía 'agent-context implementation' sin id, que el CLI rechaza ('role implementation requires a change id'). Se reescribe con 'investigation', el único rol sin id, manteniendo la intención: sin change seleccionado se publica el tdd global.
+- **2026-10-02T13:57:16Z** `[status]` in-progress → in-review
