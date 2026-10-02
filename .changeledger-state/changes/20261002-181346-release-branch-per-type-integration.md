@@ -209,9 +209,10 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/lifecycle.test.mjs`
   - **Criteria:** CR10
   - **Resolved:** `2026-10-02T18:46:20Z`
-- [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
+- [x] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T18:46:21Z`
 
 ## Log
 - **2026-10-02T18:13:46Z** `[version]` 0.18.0-dev
