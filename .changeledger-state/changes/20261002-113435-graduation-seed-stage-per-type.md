@@ -2,9 +2,10 @@
 id: "20261002-113435"
 title: Fase de semilla de graduación configurable por tipo
 type: feature
-status: approved
+status: in-progress
 created: 2026-10-02T11:34:35Z
 depends_on: ["20261002-113320"]
+branch: feature/20261002-113435
 related_to: []
 owner: Carlos Rodríguez
 release_impact: minor
@@ -138,3 +139,5 @@ graduación.
 
 ## Log
 - **2026-10-02T13:03:23Z** `[status]` draft → approved (human via conversation)
+- **2026-10-02T15:01:13Z** `[status]` approved → in-progress
+- **2026-10-02T15:01:13Z** `[branch]` set: feature/20261002-113435 (auto)
