@@ -154,9 +154,10 @@ de seguimiento del remoto.
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR7
   - **Resolved:** `2026-10-02T15:47:44Z`
-- [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
+- [x] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T15:47:45Z`
 
 ## Log
 - **2026-10-02T15:33:41Z** `[status]` draft → approved (human via conversation)
