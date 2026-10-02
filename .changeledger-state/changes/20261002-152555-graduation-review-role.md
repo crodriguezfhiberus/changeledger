@@ -157,10 +157,11 @@ Estado actual, verificado en `dev`:
   - **Verify:** `node --test test/agent-context.test.mjs`
   - **Criteria:** CR1, CR2
   - **Resolved:** `2026-10-02T16:12:48Z`
-- [ ] Esqueleto de prompt del rol
+- [x] Esqueleto de prompt del rol
   - **Target:** `templates/contract/agent-prompts/graduation-review.md`
   - **Verify:** `node --test test/agent-prompt.test.mjs`
   - **Criteria:** CR3
+  - **Resolved:** `2026-10-02T16:12:49Z`
 - [ ] Cápsula del rol con su concept guard
   - **Target:** `templates/contract/agent-contexts/graduation-review.md`
   - **Verify:** `node --test test/context.test.mjs`
