@@ -101,7 +101,18 @@ política efectiva (`transversalPolicy` con el tipo, `src/commands/context.mjs`)
 el core, los modos y `agent-context` sin change publican `git.integration_branch`.
 La línea omite la clave cuando la rama resuelta no está declarada, y un tipo
 `release` sin `git.release_branch` hace fallar esas capturas con el mismo error
-en vez de publicar la rama del repo. `check --commits` usa
+en vez de publicar la rama del repo. Cuando la rama de integración del change
+difiere de una `git.integration_branch` declarada, la línea añade justo después
+`back_merge_branch=<git.integration_branch>`, la rama a la que también se lleva
+el resultado integrado; sin `git.integration_branch` declarada no se publica
+aunque la rama autodetectada difiera, y el core, los modos y `agent-context` sin
+change nunca la publican. Toda composición —core, modos, id y todos los roles de
+`agent-context`— publica además `release_types=<tipos>` (`releaseTypes`): los
+tipos con `integrates_into: release`, separados por comas en el orden en que
+JavaScript enumera las claves de `config.types` (primero los nombres con forma de
+entero, después el orden de inserción), sólo mientras `git.release_branch` está
+declarada y algún tipo se integra en ella, el único estado en que `context <id>`
+y `agent-context` cargan un change de esos tipos. `check --commits` usa
 `git.integration_branch` como base por defecto, sin mirar el tipo de ningún
 change (una base posicional explícita conserva precedencia); cuando no existe,
 se conserva la autodetección de base mediante `origin/HEAD`, `main` o `master`.
@@ -146,10 +157,13 @@ documentado con `integration_branch:` vacío, que conserva la autodetección; su
 comentario, el mismo en ambas, dice que las ramas de change parten de
 `integration_branch` y se integran en ella, y que los tipos con `integrates_into:
 release` usan `release_branch`. La plantilla declara además `release_branch:`
-vacío; la migración no lo añade, y sin él nada cambia mientras ningún tipo
-declare `integrates_into: release`. El formulario estructurado del viewer
-permite declarar, cambiar o vaciar la rama de integración; al eliminarla
-preserva las demás claves bajo `git`. Preview y aplicación usan el mismo motor
+vacío y el tipo `hotfix` con `integrates_into: release`, cuyo comentario pide
+declarar esa rama antes de redactar uno: mientras falta, un `hotfix` se crea con
+`new` y se aprueba, pero `context <id>` y `agent-context` lo rechazan con el error
+de rama de release no declarada. La migración no añade ni la clave ni el tipo, y
+sin ellos nada cambia mientras ningún tipo declare `integrates_into: release`.
+El formulario estructurado del viewer permite declarar, cambiar o vaciar la rama
+de integración; al eliminarla preserva las demás claves bajo `git`. Preview y aplicación usan el mismo motor
 de migración.
 
 El contrato canónico protege esa trazabilidad con un workflow git explícito:
@@ -161,6 +175,9 @@ aprobada antes de tocar código; e implementan un change a la vez. Los cambios n
 relacionados no se incluyen silenciosamente. Cuando el contexto del change
 publica `integration_branch`, la rama del change parte de ella, el resultado se
 integra en ella y es la `<base>` con que se comprueban los commits del change.
+Cuando además publica `back_merge_branch`, el resultado integrado se lleva
+también a esa rama y se registra en el Log con `changeledger log <id>`; ningún
+comando automatiza ese merge.
 La rama de release queda reservada a releases y a los tipos que se integran en
 ella.
 
