@@ -265,3 +265,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T14:52:35Z** `[validation]` in-validation → done (human accepted via conversation)
 - **2026-10-02T14:58:14Z** `[graduation]` spec: `readiness.md`
 - **2026-10-02T14:58:15Z** `[graduation]` spec: `lifecycle.md`
+- **2026-10-02T14:58:17Z** `[graduation]` spec: `contract-discovery.md`
