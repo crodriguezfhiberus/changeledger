@@ -183,10 +183,11 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR1, CR2
   - **Resolved:** `2026-10-02T18:46:15Z`
-- [ ] Guarda de `status in-progress` con la rama de integración del change
+- [x] Guarda de `status in-progress` con la rama de integración del change
   - **Target:** `src/commands/agent.mjs`
   - **Verify:** `node --test test/agent.test.mjs`
   - **Criteria:** CR3, CR4, CR5
+  - **Resolved:** `2026-10-02T18:46:16Z`
 - [ ] Línea de política con la rama del change en `context` y `agent-context`
   - **Target:** `src/commands/context.mjs`
   - **Verify:** `node --test test/context.test.mjs`
