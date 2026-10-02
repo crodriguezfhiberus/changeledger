@@ -107,15 +107,21 @@ difiere de una `git.integration_branch` declarada, la línea añade justo despu�
 el resultado integrado; sin `git.integration_branch` declarada no se publica
 aunque la rama autodetectada difiera, y el core, los modos y `agent-context` sin
 change nunca la publican. Toda composición —core, modos, id y todos los roles de
-`agent-context`— publica además `release_types=<tipos>` (`releaseTypes`): los
+`agent-context`— publica además, tras `language=` y `tdd=` (si se publica) y
+antes de `integration_branch=`, `release_types=<tipos>` (`releaseTypes`): los
 tipos con `integrates_into: release`, separados por comas en el orden en que
 JavaScript enumera las claves de `config.types` (primero los nombres con forma de
 entero, después el orden de inserción), sólo mientras `git.release_branch` está
 declarada y algún tipo se integra en ella, el único estado en que `context <id>`
-y `agent-context` cargan un change de esos tipos. `check --commits` usa
-`git.integration_branch` como base por defecto, sin mirar el tipo de ningún
-change (una base posicional explícita conserva precedencia); cuando no existe,
-se conserva la autodetección de base mediante `origin/HEAD`, `main` o `master`.
+y `agent-context` cargan un change de esos tipos. `releaseTypes` sólo lee
+`git.release_branch` cuando algún tipo se integra en ella: entonces un valor mal
+formado (`release_branch: ""`) lanza
+`config "git.release_branch" must be a non-empty string` y hace fallar toda
+composición, incluido el core del bootstrap; sin tipos de release no la lee.
+`check --commits` usa `git.integration_branch` como base por defecto, sin mirar
+el tipo de ningún change (una base posicional explícita conserva precedencia);
+cuando no existe, se conserva la autodetección de base mediante `origin/HEAD`,
+`main` o `master`.
 
 `changeledger check` valida el mismo contrato que los consumidores Git: `git`
 debe ser un mapping —un `git` que no lo es se reporta una sola vez— e
@@ -157,14 +163,14 @@ documentado con `integration_branch:` vacío, que conserva la autodetección; su
 comentario, el mismo en ambas, dice que las ramas de change parten de
 `integration_branch` y se integran en ella, y que los tipos con `integrates_into:
 release` usan `release_branch`. La plantilla declara además `release_branch:`
-vacío y el tipo `hotfix` con `integrates_into: release`, cuyo comentario pide
-declarar esa rama antes de redactar uno: mientras falta, un `hotfix` se crea con
-`new` y se aprueba, pero `context <id>` y `agent-context` lo rechazan con el error
-de rama de release no declarada. La migración no añade ni la clave ni el tipo, y
-sin ellos nada cambia mientras ningún tipo declare `integrates_into: release`.
-El formulario estructurado del viewer permite declarar, cambiar o vaciar la rama
-de integración; al eliminarla preserva las demás claves bajo `git`. Preview y aplicación usan el mismo motor
-de migración.
+vacío, y el comentario de su tipo `hotfix` (ver **Ciclo de vida y gate de
+revisión**) pide declarar esa rama antes de redactar uno: mientras falta, un
+`hotfix` se crea con `new` y se aprueba, pero `context <id>` y `agent-context`
+lo rechazan con el error de rama de release no declarada. La migración no añade
+la clave, y sin ella nada cambia mientras ningún tipo declare `integrates_into:
+release`. El formulario estructurado del viewer permite declarar, cambiar o
+vaciar la rama de integración; al eliminarla preserva las demás claves bajo
+`git`. Preview y aplicación usan el mismo motor de migración.
 
 El contrato canónico protege esa trazabilidad con un workflow git explícito:
 los agentes no implementan changes aprobados en la rama de integración ni en la
