@@ -159,3 +159,4 @@ de seguimiento del remoto.
 - **2026-10-02T15:33:41Z** `[status]` draft → approved (human via conversation)
 - **2026-10-02T15:33:51Z** `[status]` approved → in-progress
 - **2026-10-02T15:33:51Z** `[branch]` set: feature/20261002-152923 (auto)
+- **2026-10-02T15:47:41Z** `[note]` La tarea 4 (pnpm verify) se cumple con sus tres gates equivalentes —biome check, node --test (1541/1541) y changeledger check— porque el pnpm instalado (v11.13.0) no cumple el >=12.6.0 del proyecto. Decisión no especificada: si resolveRemote no puede decidir el remoto (varios, ninguno origin), la rama sin activar conserva el mensaje anterior en vez de fallar.
