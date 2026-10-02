@@ -2,9 +2,10 @@
 id: "20261002-165630"
 title: Ayuda del CLI y README con el rol graduation-review
 type: quick
-status: approved
+status: in-progress
 created: 2026-10-02T16:56:30Z
 depends_on: []
+branch: quick/20261002-165630
 related_to: ["20261002-152555"]
 owner: Carlos Rodríguez
 release_impact: patch
@@ -28,3 +29,5 @@ contrato, las specs y cualquier comportamiento. Se revierte con el commit.
 
 ## Log
 - **2026-10-02T17:02:51Z** `[status]` draft → approved (human via conversation)
+- **2026-10-02T17:02:53Z** `[status]` approved → in-progress
+- **2026-10-02T17:02:53Z** `[branch]` set: quick/20261002-165630 (auto)
