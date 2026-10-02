@@ -2,7 +2,7 @@
 id: "20261002-113435"
 title: Fase de semilla de graduación configurable por tipo
 type: feature
-status: in-review
+status: in-validation
 created: 2026-10-02T11:34:35Z
 depends_on: ["20261002-113320"]
 branch: feature/20261002-113435
@@ -150,3 +150,4 @@ graduación.
 - **2026-10-02T15:12:59Z** `[note]` Verify de la tarea 5 corregido a test/context.test.mjs: los concept guards viven en la tabla curada CONCEPT_GUARDS de ese fichero (lo exige AGENTS.md), no en test/contract.test.mjs. La tarea 6 (pnpm verify) se cumple con sus tres gates equivalentes —biome check, node --test y changeledger check— porque el pnpm instalado (v11.13.0) no cumple el >=12.6.0 que exige el proyecto.
 - **2026-10-02T15:13:23Z** `[status]` in-progress → in-review
 - **2026-10-02T15:13:35Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR6 sobre dev..d0d94fc (src/commands/graduate.mjs, src/check.mjs, templates/config.yml, templates/contract/close.md y sus tests).
+- **2026-10-02T15:19:00Z** `[review]` in-review → in-validation (delegated subagent, clean context)
