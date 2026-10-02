@@ -255,3 +255,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T13:33:39Z** `[branch]` set: feature/20261002-113320 (auto)
 - **2026-10-02T13:56:12Z** `[note]` CR5 corregido durante la implementación: su segundo paso pedía 'agent-context implementation' sin id, que el CLI rechaza ('role implementation requires a change id'). Se reescribe con 'investigation', el único rol sin id, manteniendo la intención: sin change seleccionado se publica el tdd global.
 - **2026-10-02T13:57:16Z** `[status]` in-progress → in-review
+- **2026-10-02T13:57:30Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR10 sobre dev..d8b94c9 (src/check.mjs, src/commands/context.mjs, src/commands/agent-context.mjs, templates/config.yml, templates/contract/spec.md, templates/contract/readiness.md y sus tests).
