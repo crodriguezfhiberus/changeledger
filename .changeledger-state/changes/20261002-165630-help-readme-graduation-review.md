@@ -2,7 +2,7 @@
 id: "20261002-165630"
 title: Ayuda del CLI y README con el rol graduation-review
 type: quick
-status: draft
+status: approved
 created: 2026-10-02T16:56:30Z
 depends_on: []
 related_to: ["20261002-152555"]
@@ -27,3 +27,4 @@ es la revisión de solo lectura de la reconciliación de specs de un change
 contrato, las specs y cualquier comportamiento. Se revierte con el commit.
 
 ## Log
+- **2026-10-02T17:02:51Z** `[status]` draft → approved (human via conversation)
