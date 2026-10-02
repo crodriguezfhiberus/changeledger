@@ -2,7 +2,7 @@
 id: "20261002-113320"
 title: Tipo de change documentation y tdd por tipo
 type: feature
-status: in-progress
+status: in-review
 created: 2026-10-02T11:33:20Z
 depends_on: []
 branch: feature/20261002-113320
@@ -257,3 +257,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T13:57:16Z** `[status]` in-progress → in-review
 - **2026-10-02T13:57:30Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR10 sobre dev..d8b94c9 (src/check.mjs, src/commands/context.mjs, src/commands/agent-context.mjs, templates/config.yml, templates/contract/spec.md, templates/contract/readiness.md y sus tests).
 - **2026-10-02T14:04:25Z** `[review]` in-review → in-progress (retry): Revisión 1: el concept guard de CR9 está fuera de la tabla curada CONCEPT_GUARDS (cuyo recuento queda desfasado) y su comentario afirma que tolera reescrituras, lo que es falso (selector anclado al inicio del párrafo; 'blocked' exigido en la misma cláusula). Limpieza: servesReadiness mal nombrado y comentario de transversalPolicy desfasado en context.mjs.
+- **2026-10-02T14:12:43Z** `[status]` in-progress → in-review
