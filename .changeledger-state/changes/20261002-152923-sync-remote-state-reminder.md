@@ -5,7 +5,7 @@ type: feature
 status: draft
 created: 2026-10-02T15:29:23Z
 depends_on: []
-related_to: ["20260811-151426"]
+related_to: ["20260811-151426", "20261002-113320", "20261002-113435"]
 owner: Carlos Rodríguez
 release_impact: patch
 ---
