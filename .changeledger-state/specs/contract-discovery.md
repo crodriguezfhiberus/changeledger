@@ -71,14 +71,16 @@ componiéndose para todos los tipos, y la invocación de modo desnudo no resuelv
 ningún tipo, así que el filtro no la alcanza.
 
 La delegación portable separa el contrato del orquestador del de sus hojas:
-`changeledger agent-prompt <role>` entrega un esqueleto para investigación,
-implementación o review, y el delegado identificado carga únicamente
-`changeledger agent-context <role> [change-id]`. Las cápsulas delimitan su
-responsabilidad y autoridad; investigation y review son de solo lectura y no
-reciben comandos de lifecycle. Cada esqueleto declara que su `agent-context`
-reemplaza la carga predeterminada del bootstrap para esa tarea delegada; el
-bootstrap general no expone roles ni detalles de delegación. La cápsula lleva la
-misma línea **Effective policy** (`buildAgentContext`,
+`changeledger agent-prompt <role>` entrega un esqueleto para cada rol de
+`AGENT_ROLES` (`src/commands/agent-context.mjs`) —`investigation`,
+`implementation`, `review`, `post-review` y `graduation-review`—, y el delegado
+identificado carga únicamente `changeledger agent-context <role> [change-id]`.
+Las cápsulas delimitan su responsabilidad y autoridad; todas salvo
+`implementation` son de solo lectura y ninguna recibe comandos de lifecycle.
+Cada esqueleto declara que su `agent-context` reemplaza la carga predeterminada
+del bootstrap para esa tarea delegada; el bootstrap general no expone roles ni
+detalles de delegación. La cápsula lleva la misma línea **Effective policy**
+(`buildAgentContext`,
 `src/commands/agent-context.mjs`), y la de implementación condiciona a ella su
 red-green (`tdd=on`): con change seleccionado publica el `tdd` efectivo del tipo
 de ese change; sin él —sólo `investigation` admite omitir el id— publica el
