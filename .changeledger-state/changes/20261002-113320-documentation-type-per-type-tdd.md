@@ -237,12 +237,13 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/lifecycle.test.mjs`
   - **Criteria:** CR8
   - **Resolved:** `2026-10-02T13:56:58Z`
-- [ ] Párrafo del tipo `documentation` en `## Stages` de `spec.md` y la
+- [x] Párrafo del tipo `documentation` en `## Stages` de `spec.md` y la
   regla del override en `readiness.md`, con su concept guard, dentro de
   presupuesto
   - **Target:** `templates/contract/spec.md`
   - **Verify:** `node --test test/contract.test.mjs`
   - **Criteria:** CR9, CR10
+  - **Resolved:** `2026-10-02T13:56:59Z`
 - [ ] Gate completo
   - **Support:**
   - **Verify:** `pnpm verify`
