@@ -123,3 +123,4 @@ comparte con `dev` ya está en `main`.
 - **2026-10-02T21:22:34Z** `[status]` in-progress → in-review
 - **2026-10-02T21:22:36Z** `[note]` Mandato de revisión (confirmación, ronda 2): la corrección sin commitear sobre c6ec722 —merge-base --all con todas las bases en la rama de integración del change, el test criss-cross, los comentarios reescritos y los dos mensajes de fallo cerrado (ref local ausente, historias sin relación)— y cualquier regresión que introduzca.
 - **2026-10-02T21:31:25Z** `[review]` in-review → in-validation (delegated subagent, clean context)
+- **2026-10-02T21:31:26Z** `[note]` Seguimientos de la revisión (fuera del change, ya presentes en c6ec722): una etiqueta llamada dev sombrea a la rama en ambas comprobaciones (resolver refs/heads/<nombre> lo cerraría); un cherry-pick de trabajo de dev no se detecta, y el comentario no lo afirma.
