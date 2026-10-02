@@ -85,10 +85,11 @@ pierde el paralelismo con la lista de modos del mismo overlay.
 
 ## Plan
 
-- [ ] Condición de los tres modos en `close.md` y guard 19 que los exige
+- [x] Condición de los tres modos en `close.md` y guard 19 que los exige
   - **Target:** `templates/contract/close.md`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR1, CR3
+  - **Resolved:** `2026-10-02T17:19:29Z`
 - [ ] Descripción de `{{specs}}` en el esqueleto
   - **Target:** `templates/contract/agent-prompts/graduation-review.md`
   - **Verify:** `node --test test/agent-prompt.test.mjs`
