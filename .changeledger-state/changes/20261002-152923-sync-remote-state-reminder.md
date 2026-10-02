@@ -2,9 +2,10 @@
 id: "20261002-152923"
 title: sync avisa cuando el remoto publica estado global y el clon no está activado
 type: feature
-status: approved
+status: in-progress
 created: 2026-10-02T15:29:23Z
 depends_on: []
+branch: feature/20261002-152923
 related_to: ["20260811-151426", "20261002-113320", "20261002-113435"]
 owner: Carlos Rodríguez
 release_impact: patch
@@ -156,3 +157,5 @@ de seguimiento del remoto.
 
 ## Log
 - **2026-10-02T15:33:41Z** `[status]` draft → approved (human via conversation)
+- **2026-10-02T15:33:51Z** `[status]` approved → in-progress
+- **2026-10-02T15:33:51Z** `[branch]` set: feature/20261002-152923 (auto)
