@@ -2,7 +2,7 @@
 id: "20261002-181346"
 title: Rama de release y rama de integración por tipo
 type: feature
-status: in-validation
+status: done
 created: 2026-10-02T18:13:46Z
 depends_on: []
 branch: feature/20261002-181346
@@ -227,3 +227,4 @@ previo trata la rama de release ni la integración por tipo.
 - **2026-10-02T19:03:06Z** `[note]` Mandato de revisión (confirmación, ronda 2): la corrección sin commitear sobre 784e473 —el comentario gestionado de git: en templates/config.yml y su copia en setBlankGitSection de src/config-migration.mjs (autorizada por el orquestador para cerrar el defecto en ambos sitios), más los tres pins de test/config-migration.test.mjs— y cualquier regresión que introduzca.
 - **2026-10-02T19:08:58Z** `[review]` in-review → in-validation (delegated subagent, clean context)
 - **2026-10-02T19:08:59Z** `[note]` Seguimientos de la revisión (no bloquean): la guarda de status in-progress sólo comprueba ascendencia, así que en el esquema habitual (dev por delante de main) una rama de un tipo de release creada desde dev también la pasa y arrastraría trabajo sin publicar; con change_branch_format nulo, un tipo de release arranca sin git.release_branch y luego context <id> falla; el comentario de la migración nombra release_branch aunque la migración no lo añade; los recuentos «twelve/eleven» de test/context.test.mjs son previos y están desfasados.
+- **2026-10-02T19:14:19Z** `[validation]` in-validation → done (human accepted via conversation)
