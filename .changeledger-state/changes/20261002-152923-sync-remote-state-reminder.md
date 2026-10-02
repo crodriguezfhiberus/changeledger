@@ -143,10 +143,11 @@ de seguimiento del remoto.
   - **Verify:** `node --test test/sync.test.mjs`
   - **Criteria:** CR1, CR2, CR3, CR4, CR5
   - **Resolved:** `2026-10-02T15:47:42Z`
-- [ ] Recorrido clonar → sync → activate → sync --status
+- [x] Recorrido clonar → sync → activate → sync --status
   - **Target:** `test/sync.test.mjs`
   - **Verify:** `node --test test/sync.test.mjs`
   - **Criteria:** CR6
+  - **Resolved:** `2026-10-02T15:47:43Z`
 - [ ] Frase de `sync` en la sección de estado global del core, dentro de
   presupuesto
   - **Target:** `templates/contract/core.md`
