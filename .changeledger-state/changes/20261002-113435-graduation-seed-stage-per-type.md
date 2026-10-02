@@ -138,9 +138,10 @@ graduación.
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR6
   - **Resolved:** `2026-10-02T15:13:04Z`
-- [ ] Gate completo
+- [x] Gate completo
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T15:13:05Z`
 
 ## Log
 - **2026-10-02T13:03:23Z** `[status]` draft → approved (human via conversation)
