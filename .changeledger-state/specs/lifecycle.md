@@ -152,7 +152,7 @@ produce verdad persistente.
 sobre un tema, contrastada con lo que el código hace realmente, sin tocar código
 de la aplicación. La plantilla de `init` (`templates/config.yml`) lo declara con
 stages `request`, `investigation`, `specification` y `log`, `review_required:
-true`, `tdd: false` e impacto de release `none`. Sin Plan, sus criterios son el
+true`, `tdd: false`, `seed_stage: investigation` e impacto de release `none`. Sin Plan, sus criterios son el
 encargo completo: recorre `draft → approved` humano → `in-progress → in-review →
 in-validation → done` sin ninguna tarea. Como no hay Plan donde poner las
 obligaciones de ejecución, el contrato (`templates/contract/spec.md`) manda
@@ -411,7 +411,11 @@ escribir, por lo que `skip` o `skip-*` nunca pueden convertirse accidentalmente
 en nombres de spec.
 
 Para una spec nueva, `--new` llama a `scaffoldSpec()`: crea una semilla desde
-Specification/Proposal con un marcador explícito de scaffold, pero no escribe el
+la fase que el tipo del change declara en `types.<tipo>.seed_stage` o, si no la
+declara, desde Specification y, a falta de ella, Proposal. `checkConfig` exige
+que `seed_stage` sea texto (`seed_stage must be a string`) y una de las stages
+activas del tipo (`seed_stage "<s>" is not an active stage`). La semilla lleva
+un marcador explícito de scaffold, pero no escribe el
 Log ni fija `reviewed`; el change continúa pendiente. El agente reemplaza la
 semilla por verdad actual durable y elimina el marcador. Después `--into`
 (`graduate(..., { into: true })`) exige que la spec exista y que el marcador ya
