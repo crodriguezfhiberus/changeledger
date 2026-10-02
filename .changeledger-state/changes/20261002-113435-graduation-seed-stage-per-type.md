@@ -132,11 +132,12 @@ graduación.
   - **Verify:** `node --test test/graduate.test.mjs`
   - **Criteria:** CR5
   - **Resolved:** `2026-10-02T15:13:03Z`
-- [ ] Origen de la semilla en el paso `--new` del overlay de cierre, con su
+- [x] Origen de la semilla en el paso `--new` del overlay de cierre, con su
   concept guard
   - **Target:** `templates/contract/close.md`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR6
+  - **Resolved:** `2026-10-02T15:13:04Z`
 - [ ] Gate completo
   - **Support:**
   - **Verify:** `pnpm verify`
