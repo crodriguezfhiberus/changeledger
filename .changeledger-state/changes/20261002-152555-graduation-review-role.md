@@ -2,7 +2,7 @@
 id: "20261002-152555"
 title: Revisión independiente de la reconciliación de specs al cerrar
 type: feature
-status: draft
+status: approved
 created: 2026-10-02T15:25:55Z
 depends_on: []
 related_to: ["20261002-113320", "20261002-113435"]
@@ -181,3 +181,4 @@ Estado actual, verificado en `dev`:
   - **Verify:** `pnpm verify`
 
 ## Log
+- **2026-10-02T15:33:40Z** `[status]` draft → approved (human via conversation)
