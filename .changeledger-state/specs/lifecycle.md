@@ -44,7 +44,8 @@ El gate opcional **`in-review`** cierra el lazo doc↔código para los tipos que
 requieren una **revisión independiente**. La revisión la
 ejecuta un **subagente con contexto limpio** (sin el historial de implementación,
 para no heredar sesgo) y un **modelo acorde a la dificultad**. *Qué* valida:
-cada `CRn` cumplido, sin residuo y Plan realmente hecho. La
+cada `CRn` cumplido, sin residuo y, cuando el tipo activa `plan`, Plan realmente
+hecho. La
 auditoría profunda de seguridad/lint/SAST queda en herramientas dedicadas que el
 revisor puede invocar; ChangeLedger no las reimplementa. El *cómo* se lanza el
 subagente es del agente anfitrión — `changeledger context review` solo fija el qué.
@@ -113,17 +114,23 @@ baratos para exploración localizada, inventarios, edición mecánica, tests y
 verificaciones acotadas.
 
 **Activación por tipo.** `config.yml` marca `review_required: true` por tipo
-(`feature`, `bug`, `refactor` por defecto). `chore`, `audit` y `quick` saltan
-únicamente la revisión: van `in-progress → in-validation`. Todo tipo pasa por
-validación humana antes de `done`; así `done` siempre significa resultado
-aceptado.
+(`feature`, `bug`, `refactor` y `documentation` por defecto). `chore`, `audit`
+y `quick` saltan únicamente la revisión: van `in-progress → in-validation`. Todo
+tipo pasa por validación humana antes de `done`; así `done` siempre significa
+resultado aceptado.
 
 Exigir revisión y no poder contener nada verificable es una configuración
-incoherente, no una preferencia: `checkCoverage` sólo corre para tipos que
-activan `specification`, y los bloques `### CRn` sólo se parsean de esa stage, de
-modo que un tipo con `review_required: true` sin ella manda al revisor un encargo
-sin criterios que comprobar. `checkConfig` lo rechaza nombrando el tipo y las
-stages ausentes en orden canónico. Por eso `refactor` activa `specification`: es
+incoherente, no una preferencia: los bloques `### CRn` sólo se parsean de
+`## Specification`, de modo que un tipo con `review_required: true` sin ella
+manda al revisor un encargo sin criterios que comprobar. Con el `tdd` efectivo
+del tipo encendido, las tareas que citan esos criterios viven en `## Plan` y la
+cobertura las ata, así que se exigen las dos stages (`REVIEWABLE_STAGES`); con
+el `tdd` efectivo apagado no hay cobertura y los criterios solos son el encargo
+del revisor, así que basta `specification`. `checkConfig` (`src/check.mjs`,
+resolviendo el `tdd` con `effectiveTdd`) rechaza la incoherencia nombrando el
+tipo y las stages ausentes en orden canónico
+(`config type "<t>": review_required: true requires active stages: <faltantes>`).
+Por eso `refactor` activa `specification`: es
 el tipo con más probabilidad de cambiar comportamiento en silencio, y sus
 criterios son la prueba de que se preservó; el trabajo mecánico pertenece a
 `chore` o `quick`. Queda pendiente una incoherencia menor y conocida: `chore`
@@ -140,6 +147,22 @@ gate, pero con el ciclo corto completo (`draft → approved` humano →
 `[#id]`. Si el alcance crece durante la ejecución, se descarta y se recrea con
 el tipo correcto. Su graduación es siempre `--skip`: por elegibilidad no
 produce verdad persistente.
+
+**Tipo `documentation`.** Tipo oficial cuyo entregable es verdad persistente
+sobre un tema, contrastada con lo que el código hace realmente, sin tocar código
+de la aplicación. La plantilla de `init` (`templates/config.yml`) lo declara con
+stages `request`, `investigation`, `specification` y `log`, `review_required:
+true`, `tdd: false` e impacto de release `none`. Sin Plan, sus criterios son el
+encargo completo: recorre `draft → approved` humano → `in-progress → in-review →
+in-validation → done` sin ninguna tarea. Como no hay Plan donde poner las
+obligaciones de ejecución, el contrato (`templates/contract/spec.md`) manda
+redactarlas como CR propios del change: perímetro fijado en el draft según quién
+llama a qué y no por coincidencias de texto, cita de ruta y símbolo en cada
+afirmación, decisión humana de cada divergencia con una spec existente antes de
+`in-review` —si falta, el change va a `blocked`— y correcciones de specs
+existentes redactadas dentro del change, donde el revisor las ve. Ninguna
+migración de esquema lo añade: un repo ya existente lo declara en su config si
+lo quiere.
 
 **Ownership operacional.** El core compuesto publica una única matriz de
 transición → propietario → mecanismo. Distingue las decisiones humanas
