@@ -244,9 +244,10 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/contract.test.mjs`
   - **Criteria:** CR9, CR10
   - **Resolved:** `2026-10-02T13:56:59Z`
-- [ ] Gate completo
+- [x] Gate completo
   - **Support:**
   - **Verify:** `pnpm verify`
+  - **Resolved:** `2026-10-02T13:57:01Z`
 
 ## Log
 - **2026-10-02T13:03:15Z** `[status]` draft → approved (human via conversation)
