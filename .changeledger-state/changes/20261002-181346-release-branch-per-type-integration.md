@@ -2,7 +2,7 @@
 id: "20261002-181346"
 title: Rama de release y rama de integración por tipo
 type: feature
-status: draft
+status: approved
 created: 2026-10-02T18:13:46Z
 depends_on: []
 related_to: ["20260711-210115", "20260731-161655", "20261002-113320"]
@@ -207,3 +207,4 @@ previo trata la rama de release ni la integración por tipo.
 
 ## Log
 - **2026-10-02T18:13:46Z** `[version]` 0.18.0-dev
+- **2026-10-02T18:20:47Z** `[status]` draft → approved (human via conversation)
