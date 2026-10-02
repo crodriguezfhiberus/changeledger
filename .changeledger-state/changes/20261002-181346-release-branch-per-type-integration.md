@@ -178,10 +178,11 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/config.test.mjs`
   - **Criteria:** CR4
   - **Resolved:** `2026-10-02T18:46:14Z`
-- [ ] Validación de `git.release_branch` e `integrates_into`
+- [x] Validación de `git.release_branch` e `integrates_into`
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR1, CR2
+  - **Resolved:** `2026-10-02T18:46:15Z`
 - [ ] Guarda de `status in-progress` con la rama de integración del change
   - **Target:** `src/commands/agent.mjs`
   - **Verify:** `node --test test/agent.test.mjs`
