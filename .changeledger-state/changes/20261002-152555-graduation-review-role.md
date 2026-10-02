@@ -5,6 +5,7 @@ type: feature
 status: done
 created: 2026-10-02T15:25:55Z
 depends_on: []
+reviewed: true
 branch: feature/20261002-152555
 related_to: ["20261002-113320", "20261002-113435"]
 owner: Carlos Rodríguez
@@ -202,3 +203,4 @@ Estado actual, verificado en `dev`:
 - **2026-10-02T16:23:31Z** `[note]` Seguimientos de la revisión (fuera del Plan, no bloquean): bin/changeledger.mjs (ayuda de [change-id] y ejemplos de agent-prompt) y README.md siguen listando cuatro roles; el ejemplo de diff para repos inactivos no muestra una spec nueva sin seguimiento ni una edición ya en el índice; close.md exige la revisión cuando el cierre «crea o corrige» specs, así que un cierre que sólo amplía una spec existente queda, leído al pie de la letra, fuera.
 - **2026-10-02T16:27:52Z** `[validation]` in-validation → done (human accepted via conversation)
 - **2026-10-02T16:32:15Z** `[note]` graduation-review de la reconciliación (contract-discovery, lifecycle): recomienda aplicar; confirma cada frase cambiada contra el código y ninguna otra spec contradice el change. Nota cosmética: un salto de línea corto en contract-discovery.
+- **2026-10-02T16:32:17Z** `[graduation]` spec: `contract-discovery.md`
