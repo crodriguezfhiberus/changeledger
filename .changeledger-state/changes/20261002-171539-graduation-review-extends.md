@@ -110,3 +110,4 @@ pierde el paralelismo con la lista de modos del mismo overlay.
 - **2026-10-02T17:25:48Z** `[review]` in-review → in-validation (delegated subagent, clean context)
 - **2026-10-02T17:25:49Z** `[note]` Seguimientos de la revisión (no bloquean): los huecos del guard 19 (40/30/20) toleran la redacción actual pero no un reordenamiento como «extends, creates or corrects specs»; el comentario «in any order» describe el rol y --into, no los verbos. La spec lifecycle sigue diciendo «crea o corrige» y se reconcilia al cerrar.
 - **2026-10-02T17:30:51Z** `[validation]` in-validation → done (human accepted via conversation)
+- **2026-10-02T17:32:17Z** `[note]` graduation-review de la reconciliación (lifecycle): recomienda aplicar; la frase coincide con la condición de close.md y ninguna otra spec conserva «crea o corrige».
