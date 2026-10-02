@@ -100,11 +100,12 @@ comparte con `dev` ya está en `main`.
   - **Verify:** `node --test test/agent.test.mjs`
   - **Criteria:** CR1, CR2, CR3, CR4, CR5
   - **Resolved:** `2026-10-02T21:01:08Z`
-- [ ] Comprobación del merge-base con la rama de integración en la guarda de
+- [x] Comprobación del merge-base con la rama de integración en la guarda de
   arranque
   - **Target:** `src/commands/agent.mjs`
   - **Verify:** `node --test test/agent.test.mjs`
   - **Criteria:** CR1, CR2, CR3, CR5
+  - **Resolved:** `2026-10-02T21:01:10Z`
 - [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
