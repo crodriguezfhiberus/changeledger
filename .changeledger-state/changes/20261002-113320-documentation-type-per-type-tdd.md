@@ -211,10 +211,11 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR1, CR2, CR3
   - **Resolved:** `2026-10-02T13:56:50Z`
-- [ ] Regla de `review_required` condicionada al tdd efectivo del tipo
+- [x] Regla de `review_required` condicionada al tdd efectivo del tipo
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR6
+  - **Resolved:** `2026-10-02T13:56:52Z`
 - [ ] Línea de política y omisión de `readiness` según el tdd del change en
   `changePolicyBlock` y `fragmentsForType`
   - **Target:** `src/commands/context.mjs`
