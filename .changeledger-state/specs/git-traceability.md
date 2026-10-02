@@ -144,10 +144,21 @@ El contexto publica `change_branch=<rama>` y la transición `approved →
 in-progress` exige ese nombre exacto y, cuando la rama de integración del change
 está declarada, que la rama descienda de ella (`branch "<rama>" must descend
 from integration branch "<base>"`, que para un tipo `release` nombra la rama de
-release). La guarda sólo comprueba ascendencia: si la rama de integración va por
-delante de la de release, una rama de un tipo `release` creada desde la de
-integración también desciende de la de release y la pasa, arrastrando trabajo
-sin publicar. La ausencia o `null` de `change_branch_format` desactivan esta
+release). Cuando la rama de integración del change difiere de una
+`git.integration_branch` declarada, la guarda exige además que todas las bases
+de fusión entre la rama y `git.integration_branch` (`mergeBases`,
+`git merge-base --all`, `src/git.mjs`) sean ancestros de la rama de integración
+del change; si no, falla con `branch "<rama>" contains commits of "<integración>"
+that are not in "<base>"`. Así una rama de un tipo `release` creada desde una
+rama de integración que va por delante se rechaza. La comprobación mira los
+commits que la rama comparte con la de integración, no los que sólo están en la
+rama: trabajo traído con cherry-pick no se detecta. Sin bases de fusión falla
+cerrada con `branch "<rama>" cannot start: <causa>`, donde la causa dice que
+`git.integration_branch` no existe en local (`integration branch "<integración>"
+does not exist locally — create it (e.g. from its remote-tracking copy) before
+starting`) o que las historias no se relacionan (`it shares no history with
+integration branch "<integración>"`). La ausencia o `null` de
+`change_branch_format` desactivan esta
 comprobación entera en una config vigente, incluido el error de rama de release
 no declarada, que entonces aparece al componer el contexto del change.
 
