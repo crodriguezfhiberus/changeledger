@@ -232,10 +232,11 @@ Los criterios que pide el párrafo:
   - **Verify:** `node --test test/cli-bin.test.mjs`
   - **Criteria:** CR7
   - **Resolved:** `2026-10-02T13:56:56Z`
-- [ ] Recorrido de extremo a extremo de un change `documentation` sin Plan
+- [x] Recorrido de extremo a extremo de un change `documentation` sin Plan
   - **Target:** `test/lifecycle.test.mjs`
   - **Verify:** `node --test test/lifecycle.test.mjs`
   - **Criteria:** CR8
+  - **Resolved:** `2026-10-02T13:56:58Z`
 - [ ] Párrafo del tipo `documentation` en `## Stages` de `spec.md` y la
   regla del override en `readiness.md`, con su concept guard, dentro de
   presupuesto
