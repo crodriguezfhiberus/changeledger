@@ -114,10 +114,10 @@ baratos para exploración localizada, inventarios, edición mecánica, tests y
 verificaciones acotadas.
 
 **Activación por tipo.** `config.yml` marca `review_required: true` por tipo
-(`feature`, `bug`, `refactor` y `documentation` por defecto). `chore`, `audit`
-y `quick` saltan únicamente la revisión: van `in-progress → in-validation`. Todo
-tipo pasa por validación humana antes de `done`; así `done` siempre significa
-resultado aceptado.
+(`feature`, `bug`, `hotfix`, `refactor` y `documentation` por defecto). `chore`,
+`audit` y `quick` saltan únicamente la revisión: van
+`in-progress → in-validation`. Todo tipo pasa por validación humana antes de
+`done`; así `done` siempre significa resultado aceptado.
 
 Exigir revisión y no poder contener nada verificable es una configuración
 incoherente, no una preferencia: los bloques `### CRn` sólo se parsean de
@@ -163,6 +163,21 @@ afirmación, decisión humana de cada divergencia con una spec existente antes d
 existentes redactadas dentro del change, donde el revisor las ve. Ninguna
 migración de esquema lo añade: un repo ya existente lo declara en su config si
 lo quiere.
+
+**Tipo `hotfix`.** Tipo oficial para corregir código ya publicado: su rama parte
+de la rama de release y se integra en ella. La plantilla de `init`
+(`templates/config.yml`) lo declara justo después de `bug`, con sus mismas
+stages (`request`, `investigation`, `specification`, `plan` y `log`),
+`review_required: true`, `integrates_into: release` e impacto de release
+`patch`; ninguna migración de esquema lo añade. La elección entre `bug` y un
+tipo de release se liga al papel del tipo, no a su nombre: cuando el agente
+clasifica un problema como defecto y la línea `Effective policy:` publica
+`release_types=`, el contrato (`templates/contract/spec.md`) manda preguntar
+explícitamente al humano si es un fix normal (`bug`, a la rama de integración) o
+de uno de esos tipos (a la rama de release), sin inferir la respuesta y sin crear
+el draft hasta tenerla; sin `release_types=` no pregunta ni propone un tipo de
+release. Es una regla de contrato: nada impide mecánicamente crear un `bug` sin
+preguntar.
 
 **Ownership operacional.** El core compuesto publica una única matriz de
 transición → propietario → mecanismo. Distingue las decisiones humanas
