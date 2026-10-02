@@ -2,7 +2,7 @@
 id: "20261002-113435"
 title: Fase de semilla de graduación configurable por tipo
 type: feature
-status: in-validation
+status: done
 created: 2026-10-02T11:34:35Z
 depends_on: ["20261002-113320"]
 branch: feature/20261002-113435
@@ -151,3 +151,4 @@ graduación.
 - **2026-10-02T15:13:23Z** `[status]` in-progress → in-review
 - **2026-10-02T15:13:35Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR6 sobre dev..d0d94fc (src/commands/graduate.mjs, src/check.mjs, templates/config.yml, templates/contract/close.md y sus tests).
 - **2026-10-02T15:19:00Z** `[review]` in-review → in-validation (delegated subagent, clean context)
+- **2026-10-02T15:20:08Z** `[validation]` in-validation → done (human accepted via conversation)
