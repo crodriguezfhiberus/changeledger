@@ -264,3 +264,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T14:18:09Z** `[note]` Seguimientos de la revisión de confirmación (no bloquean): el mensaje de la primera aserción del guard 16 promete 'contrastada con el código' pero basta 'application code' para satisfacer \bcode\b; la redacción 'A change with an undecided divergence goes blocked' no satisface el guard porque \bdecid no casa dentro de 'undecided'. Residuales fuera de alcance: comentario de src/config-migration.mjs (v3→v4 añade plan sin mirar tdd), applyTypesPatch del viewer no edita types.<t>.tdd, agent-context muestra tdd en tipos sin specification.
 - **2026-10-02T14:52:35Z** `[validation]` in-validation → done (human accepted via conversation)
 - **2026-10-02T14:58:14Z** `[graduation]` spec: `readiness.md`
+- **2026-10-02T14:58:15Z** `[graduation]` spec: `lifecycle.md`
