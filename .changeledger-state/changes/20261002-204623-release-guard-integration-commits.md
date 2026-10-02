@@ -2,7 +2,7 @@
 id: "20261002-204623"
 title: La guarda de arranque deja pasar ramas de release creadas desde la rama de integración
 type: bug
-status: in-review
+status: in-progress
 created: 2026-10-02T20:46:23Z
 depends_on: []
 branch: bug/20261002-204623
@@ -119,3 +119,4 @@ comparte con `dev` ya está en `main`.
 - **2026-10-02T21:01:07Z** `[note]` Decisiones de implementación: sin merge-base (ref de integración ausente o historias sin relación) la guarda falla cerrada con «branch "<b>" cannot be compared with integration branch "<i>": no merge base found» y no toca el documento. Los tests usan los tipos del fixture existente —fix (release) y feature (integración)— en lugar de hotfix y bug: la guarda depende del rol integrates_into, no del nombre. Gates: biome check limpio; node --test 1717/1718 —el único fallo es 20261001-155612 CR9, preexistente en origin/dev—; changeledger check limpio; pnpm verify no se puede ejecutar (pnpm v11.13.0 < 12.6.0).
 - **2026-10-02T21:01:18Z** `[status]` in-progress → in-review
 - **2026-10-02T21:01:25Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR5 sobre dev..c6ec722 (src/commands/agent.mjs, src/git.mjs, test/agent.test.mjs).
+- **2026-10-02T21:12:09Z** `[review]` in-review → in-progress (retry): Revisión 1: con varias bases de fusión (criss-cross), git merge-base devuelve una sola según fechas y la guarda puede dejar arrancar un hotfix con un commit de dev que no está en main; los comentarios de la guarda y de mergeBase afirman más de lo que el código impone; y, aunque la decisión de fallar cerrado se mantiene, el mensaje con la ref local de integración ausente no dice qué falta.
