@@ -2,7 +2,7 @@
 id: "20261002-181346"
 title: Rama de release y rama de integración por tipo
 type: feature
-status: in-review
+status: in-progress
 created: 2026-10-02T18:13:46Z
 depends_on: []
 branch: feature/20261002-181346
@@ -222,3 +222,4 @@ previo trata la rama de release ni la integración por tipo.
 - **2026-10-02T18:46:13Z** `[note]` Decisiones de implementación: (1) CR8 se cumple sin el literal 'check --commits' en implement.md, porque el test 124837 CR3 lo reserva al core; el pack dice usar la rama de integración del change como <base> al comprobar sus commits, y el guard 20 comprueba la obligación. (2) context <id> y agent-context de un tipo de release sin git.release_branch fallan con el mismo error que status, sin publicar la rama de integración en silencio. (3) Se ajustaron test/config-migration.test.mjs (113219 CR1) y test/view.test.mjs (161655 CR6), autorizados por el orquestador, porque fijaban el bloque git: literal de la plantilla. Gates: biome check limpio; node --test 1699/1700 —el único fallo es 20261001-155612 CR9, preexistente en origin/dev por /var frente a /private/var en macOS—; changeledger check limpio. pnpm verify no se puede ejecutar (pnpm v11.13.0 < 12.6.0). registry 194234 CR3 falló una vez de forma intermitente y no se reprodujo.
 - **2026-10-02T18:46:29Z** `[status]` in-progress → in-review
 - **2026-10-02T18:46:39Z** `[note]` Mandato de revisión: la superficie que gobierna el change — CR1–CR10 sobre dev..784e473 (src/config.mjs, src/check.mjs, src/commands/agent.mjs, src/commands/context.mjs, templates/config.yml, templates/contract/implement.md y sus tests).
+- **2026-10-02T18:54:53Z** `[review]` in-review → in-progress (retry): Revisión 1: el comentario de templates/config.yml sobre git: («change branches start from and merge into this branch») es falso con este change, porque los tipos con integrates_into: release salen de git.release_branch y se integran en ella.
