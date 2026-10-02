@@ -267,3 +267,4 @@ Los criterios que pide el párrafo:
 - **2026-10-02T14:58:15Z** `[graduation]` spec: `lifecycle.md`
 - **2026-10-02T14:58:17Z** `[graduation]` spec: `contract-discovery.md`
 - **2026-10-02T14:58:18Z** `[graduation]` spec: `validation.md`
+- **2026-10-02T14:58:19Z** `[graduation]` spec: `architecture.md`
