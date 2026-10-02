@@ -148,11 +148,12 @@ de seguimiento del remoto.
   - **Verify:** `node --test test/sync.test.mjs`
   - **Criteria:** CR6
   - **Resolved:** `2026-10-02T15:47:43Z`
-- [ ] Frase de `sync` en la sección de estado global del core, dentro de
+- [x] Frase de `sync` en la sección de estado global del core, dentro de
   presupuesto
   - **Target:** `templates/contract/core.md`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR7
+  - **Resolved:** `2026-10-02T15:47:44Z`
 - [ ] Gate completo: `biome check`, `node --test` y `changeledger check`
   - **Support:**
   - **Verify:** `pnpm verify`
