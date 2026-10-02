@@ -116,10 +116,11 @@ graduación.
   - **Verify:** `node --test test/graduate.test.mjs`
   - **Criteria:** CR1, CR2
   - **Resolved:** `2026-10-02T15:13:00Z`
-- [ ] Validación de `seed_stage` contra las fases activas del tipo
+- [x] Validación de `seed_stage` contra las fases activas del tipo
   - **Target:** `src/check.mjs`
   - **Verify:** `node --test test/check.test.mjs`
   - **Criteria:** CR3
+  - **Resolved:** `2026-10-02T15:13:01Z`
 - [ ] `seed_stage: investigation` en el tipo `documentation` de la plantilla
   - **Target:** `templates/config.yml`
   - **Verify:** `node --test test/cli-bin.test.mjs`
