@@ -8,15 +8,27 @@ graduated_from: ["20260614-162547", "20260616-151216", "20260617-020229", "20260
 ## Definition of Ready (tdd)
 
 El modelo de uso es **documentar con modelo fuerte, implementar con modelo menos
-potente**. El flag `tdd` en `config.yml` (default `true`) gobierna la política: con
-`true`, los changes se documentan *test-grade* (cada requisito un CR concreto;
-cada tarea del Plan declara sus hijos `Target`/`Verify` y traza vía su hijo
-`Criteria`) y se implementan con TDD.
+potente**. El flag `tdd` en `config.yml` (default `true`) gobierna la política, y
+`types.<tipo>.tdd` se impone a él para los changes de ese tipo: con el `tdd`
+efectivo encendido, los changes se documentan *test-grade* (cada requisito un CR
+concreto; cada tarea del Plan declara sus hijos `Target`/`Verify` y traza vía su
+hijo `Criteria`) y se implementan con TDD.
+
+El valor efectivo tiene una sola sede, `effectiveTdd(config, type)` en
+`check.mjs`: el `tdd` del tipo si es booleano, si no el `tdd` global si es
+booleano, y si no `true` (`DEFAULT_TDD`). Lo consultan la cobertura, la regla de
+stages de `review_required` en `checkConfig`, la línea `Effective policy` y la
+selección de fragmentos de `changeledger context`; ninguno lo re-deriva.
+`checkConfig` rechaza un `tdd` de tipo no booleano
+(`config type "<t>": tdd must be a boolean`).
+
 `change.mjs` expone los CR declarados en `## Specification` (`parseChange().criteria`);
-`check.mjs` (`checkCoverage`) evalúa readiness cuando el tipo activa
-`specification` y el status es `draft`, `approved` o `in-progress`; `done` y los
-estados de cierre no se evalúan, y `tdd: false` desactiva todo el cruce (repos
-exploratorios).
+`check.mjs` (`checkCoverage`) evalúa readiness cuando el `tdd` efectivo del tipo
+está encendido y el status es `draft`, `approved` o `in-progress` —en un tipo sin
+`specification`, sólo para reportar como desconocido todo CR que cite una
+tarea—; `done` y los estados de cierre no se evalúan, y un `tdd`
+efectivo `false` desactiva todo el cruce (repos exploratorios, o tipos cuyo
+entregable no es código, como `documentation`).
 
 Severidad por estado:
 
