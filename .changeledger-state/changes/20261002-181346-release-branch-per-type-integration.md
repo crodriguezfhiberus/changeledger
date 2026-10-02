@@ -198,11 +198,12 @@ previo trata la rama de release ni la integración por tipo.
   - **Verify:** `node --test test/cli-bin.test.mjs`
   - **Criteria:** CR7
   - **Resolved:** `2026-10-02T18:46:18Z`
-- [ ] Reglas de rama en «Git protects traceability», con su concept guard y
+- [x] Reglas de rama en «Git protects traceability», con su concept guard y
   dentro de presupuesto
   - **Target:** `templates/contract/implement.md`
   - **Verify:** `node --test test/context.test.mjs`
   - **Criteria:** CR8, CR9
+  - **Resolved:** `2026-10-02T18:46:19Z`
 - [ ] Recorrido de extremo a extremo de un change de un tipo de release
   - **Target:** `test/lifecycle.test.mjs`
   - **Verify:** `node --test test/lifecycle.test.mjs`
