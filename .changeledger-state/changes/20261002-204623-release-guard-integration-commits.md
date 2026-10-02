@@ -2,7 +2,7 @@
 id: "20261002-204623"
 title: La guarda de arranque deja pasar ramas de release creadas desde la rama de integración
 type: bug
-status: draft
+status: approved
 created: 2026-10-02T20:46:23Z
 depends_on: []
 related_to: ["20261002-181346", "20261002-181428"]
@@ -109,3 +109,4 @@ comparte con `dev` ya está en `main`.
 
 ## Log
 - **2026-10-02T20:46:23Z** `[version]` 0.18.0-dev
+- **2026-10-02T20:47:04Z** `[status]` draft → approved (human via conversation)
