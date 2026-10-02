@@ -82,27 +82,55 @@ vez de un exit 1 opaco. Ese diagnóstico lo consume un agente que clasifica el
 fallo por su texto, así que el runner fija `LC_ALL=C` en el entorno de todo
 subproceso git: el idioma del mensaje no depende del locale del host.
 
-La clave opcional `git.integration_branch` declara la base y el destino de las
-ramas de change. Cuando existe, `check --commits` la usa como base por defecto
-(una base posicional explícita conserva precedencia) y `changeledger context`
-la publica como `integration_branch=<rama>` en la política efectiva. Cuando no
-existe, se conserva la autodetección de base mediante `origin/HEAD`, `main` o
-`master`.
+La clave opcional `git.integration_branch` declara la rama de integración del
+repositorio y `git.release_branch`, también opcional, su rama de release o de
+producción. `types.<tipo>.integrates_into` elige por su papel la base y el
+destino de las ramas de change de ese tipo: `integration` (el defecto, también
+cuando la clave falta) o `release`. `changeIntegrationBranch(config, type)`
+(`src/config.mjs`) resuelve esa rama de integración del change:
+`git.release_branch` para un tipo `release` y `git.integration_branch` en
+cualquier otro caso, incluida la llamada sin tipo. Un tipo `release` sin
+`git.release_branch` declarada nunca cae a la rama de integración del repo: lanza
+`type "<t>" integrates into git.release_branch, which is not declared`.
+
+`changeledger context <id>` y `changeledger agent-context <role> <id>` publican
+la rama de integración del change como `integration_branch=<rama>` en la
+política efectiva (`transversalPolicy` con el tipo, `src/commands/context.mjs`);
+el core, los modos y `agent-context` sin change publican `git.integration_branch`.
+La línea omite la clave cuando la rama resuelta no está declarada, y un tipo
+`release` sin `git.release_branch` hace fallar esas capturas con el mismo error
+en vez de publicar la rama del repo. `check --commits` usa
+`git.integration_branch` como base por defecto, sin mirar el tipo de ningún
+change (una base posicional explícita conserva precedencia); cuando no existe,
+se conserva la autodetección de base mediante `origin/HEAD`, `main` o `master`.
 
 `changeledger check` valida el mismo contrato que los consumidores Git: `git`
-debe ser un mapping y `integration_branch`, si no es ausente o `null`, debe ser
-un string no vacío. El accessor compartido produce el diagnóstico canónico, por
-lo que el check reporta configuraciones inválidas sin lanzar excepciones ni
-reescribirlas. Las claves Git desconocidas permanecen permitidas y se conservan
-como extensiones del repositorio.
+debe ser un mapping —un `git` que no lo es se reporta una sola vez— e
+`integration_branch` y `release_branch`, si no son ausentes o `null`, deben ser
+strings no vacíos (`config "git.<clave>" must be a non-empty string`). En cada
+tipo bien formado, `integrates_into`, si está presente, debe valer `integration`
+o `release` (`config type "<t>": integrates_into must be "integration" or
+"release"`); resolutor y checker comparten ese mensaje (`integrationRoleError`).
+Que falte `git.release_branch` no es un defecto de config aunque algún tipo la
+use: se informa al arrancar el change o al componer su contexto. El accessor
+compartido produce el diagnóstico canónico, por lo que el check reporta
+configuraciones inválidas sin lanzar excepciones ni reescribirlas. Las claves Git
+desconocidas permanecen permitidas y se conservan como extensiones del
+repositorio.
 
 `git.change_branch_format` declara el nombre determinista de cada rama de
 change. Admite texto literal y los placeholders inmutables `{type}` y `{id}`;
 exige `{id}` exactamente una vez y el resultado debe ser una ref válida de Git.
 El contexto publica `change_branch=<rama>` y la transición `approved →
-in-progress` exige tanto ese nombre exacto como descendencia de
-`git.integration_branch`, cuando ambas claves están declaradas. La ausencia o
-`null` desactivan esta comprobación en una config vigente.
+in-progress` exige ese nombre exacto y, cuando la rama de integración del change
+está declarada, que la rama descienda de ella (`branch "<rama>" must descend
+from integration branch "<base>"`, que para un tipo `release` nombra la rama de
+release). La guarda sólo comprueba ascendencia: si la rama de integración va por
+delante de la de release, una rama de un tipo `release` creada desde la de
+integración también desciende de la de release y la pasa, arrastrando trabajo
+sin publicar. La ausencia o `null` de `change_branch_format` desactivan esta
+comprobación entera en una config vigente, incluido el error de rama de release
+no declarada, que entonces aparece al componer el contexto del change.
 
 El schema 5 y `init` publican `{type}/{id}` como convención inicial. La migración
 explícita con `changeledger config migrate` lleva schemas anteriores hasta v5:
@@ -112,16 +140,27 @@ global. Una config ya en v5 nunca se reescribe implícitamente.
 
 El schema 3 distribuye esta capacidad a configuraciones existentes y repos
 nuevos. La migración v2 → v3 y la plantilla crean un bloque Git separado y
-documentado con `integration_branch:` vacío, que conserva la autodetección. El
-formulario estructurado del viewer permite declarar, cambiar o vaciar la rama;
-al eliminarla preserva las demás claves bajo `git`. Preview y aplicación usan el
-mismo motor de migración.
+documentado con `integration_branch:` vacío, que conserva la autodetección; su
+comentario, el mismo en ambas, dice que las ramas de change parten de
+`integration_branch` y se integran en ella, y que los tipos con `integrates_into:
+release` usan `release_branch`. La plantilla declara además `release_branch:`
+vacío; la migración no lo añade, y sin él nada cambia mientras ningún tipo
+declare `integrates_into: release`. El formulario estructurado del viewer
+permite declarar, cambiar o vaciar la rama de integración; al eliminarla
+preserva las demás claves bajo `git`. Preview y aplicación usan el mismo motor
+de migración.
 
 El contrato canónico protege esa trazabilidad con un workflow git explícito:
-los agentes no implementan changes aprobados en `main`, `master` ni `dev`;
-revisan el worktree antes de empezar; commitean la documentación aprobada antes
-de tocar código; e implementan un change a la vez. Los cambios no relacionados no
-se incluyen silenciosamente.
+los agentes no implementan changes aprobados en la rama de integración ni en la
+de release (`git.integration_branch`, `git.release_branch`) y, mientras alguna no
+está declarada, tampoco en la rama por defecto ni en otra rama compartida de
+larga vida; revisan el worktree antes de empezar; commitean la documentación
+aprobada antes de tocar código; e implementan un change a la vez. Los cambios no
+relacionados no se incluyen silenciosamente. Cuando el contexto del change
+publica `integration_branch`, la rama del change parte de ella, el resultado se
+integra en ella y es la `<base>` con que se comprueban los commits del change.
+La rama de release queda reservada a releases y a los tipos que se integran en
+ella.
 
 **La unidad de commit es la selección de trabajo resuelta.** Una rama de
 change lleva **cinco** clases y ninguna más: **Draft**, uno por documento
@@ -180,9 +219,6 @@ commit de cierre y cuándo la graduación o el skip son por sí mismos la eviden
 Un puntero de un overlay hacia contenido de otro fragmento se retira cuando su
 destino se mueve: al consolidar, el que remitía al checkpoint del contrato de
 implementación quedó apuntando a una sección vacía.
-
-Cuando se declara una rama de integración, las ramas de change parten de ella y
-el resultado se integra de vuelta en ella; `main` queda reservado para releases.
 
 Una corrección candidata nacida de un `review fail --retry` queda sin commit y
 aislada hasta que otro revisor de contexto limpio la confirme. Tras el `pass`, se
