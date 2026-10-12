@@ -421,9 +421,16 @@ function visibleChanges() {
 }
 
 function render() {
+  const failedLoad =
+    state.currentProject &&
+    state.loadError &&
+    (!state.repo || String(state.repo.project_id) !== String(state.currentProject));
+  if (failedLoad && state.currentView !== 'projects') {
+    paintLoadError();
+    return;
+  }
   if (!state.repo && state.currentView !== 'projects') {
-    if (state.currentProject && state.loadError) paintLoadError();
-    else litRender(noProjectsMessage(), $(`#${state.currentView}`));
+    litRender(noProjectsMessage(), $(`#${state.currentView}`));
     return;
   }
   if (state.currentView === 'graph') renderGraph();

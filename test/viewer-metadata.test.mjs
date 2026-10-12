@@ -1171,6 +1171,34 @@ test('20261007-172305 CR3: a failure after a loaded payload is cleared by the sa
   });
 });
 
+test('20261007-172305 F1: a failed load of the selected project is not covered by the previous project payload', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    const text = recoveredPayloadText();
+    assert.equal(await load(async () => text), true);
+    appState.projectsList = [
+      ...appState.projectsList,
+      { id: 'beta', name: 'Beta', path: '/repos/beta', alive: true },
+    ];
+    await selectViewerProject('beta', { loadProject: () => load(failingLoad) });
+    try {
+      setTextFilter('anything');
+      for (const view of ['board', 'table', 'graph', 'ledger', 'metrics', 'board']) {
+        activateView(view, { historyMode: null });
+        await tick();
+        const shown = fixture.querySelector(`#${view}`).textContent;
+        assert.match(shown, /boom/, `${view} keeps the selected project error`);
+        assert.doesNotMatch(shown, /Recovered change/, `${view} hides the previous project`);
+      }
+    } finally {
+      setTextFilter('');
+    }
+    await selectViewerProject('alpha', { loadProject: () => load(async () => text) });
+    const shown = fixture.querySelector('#board').textContent;
+    assert.match(shown, /Recovered change/);
+    assert.doesNotMatch(shown, /boom/);
+  });
+});
+
 test('20261007-172305 CR3: selecting another project drops the previous project error', async () => {
   await withFailedLoadFixture(async () => {
     await load(failingLoad);
