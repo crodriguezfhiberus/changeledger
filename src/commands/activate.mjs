@@ -10,18 +10,37 @@
 
 import path from 'node:path';
 import { findChangeledgerDir } from '../config.mjs';
+import { VERSION } from '../framing.mjs';
 import { capturedRun } from '../git.mjs';
 import {
   ACTIVATION_REF,
   optionalRefOid,
+  readStateConfigText,
   readStateRef,
   STATE_REF,
   seedStateRef,
   writeActivation,
 } from '../state-store.mjs';
+import { cliVersionError } from '../version-guard.mjs';
+import { parseYaml } from '../yaml.mjs';
 import { resolveRemote } from './sync.mjs';
 
-export function activate(cwd = process.cwd(), output = console, run = capturedRun) {
+// The `preAction` guard compares against the worktree marker while the clone is
+// not activated, and stands aside when the activation is broken. Neither is the
+// config of the revision this command is about to make authoritative, so the
+// comparison is repeated here, on that revision, before any ref is written.
+function assertCliAdmitted(repoRoot, revision, installedVersion, run) {
+  const config = parseYaml(readStateConfigText(repoRoot, { revision }, run));
+  const message = cliVersionError(config, installedVersion);
+  if (message) throw new Error(message);
+}
+
+export function activate(
+  cwd = process.cwd(),
+  output = console,
+  run = capturedRun,
+  installedVersion = VERSION,
+) {
   const changeledgerDir = findChangeledgerDir(cwd);
   if (!changeledgerDir) {
     throw new Error(
@@ -49,6 +68,7 @@ export function activate(cwd = process.cwd(), output = console, run = capturedRu
             run,
           );
     if (tracking !== null) {
+      assertCliAdmitted(repoRoot, tracking, installedVersion, run);
       seedStateRef(repoRoot, { revision: tracking }, run);
       output.log(`Seeded ${STATE_REF} from refs/remotes/${remote} at ${tracking}`);
       revision = readStateRef(repoRoot, run);
@@ -57,6 +77,8 @@ export function activate(cwd = process.cwd(), output = console, run = capturedRu
         `no state to activate: ${STATE_REF} does not exist in this repo — fetch it, or run \`changeledger cutover\` on the integration branch to publish it`,
       );
     }
+  } else {
+    assertCliAdmitted(repoRoot, revision, installedVersion, run);
   }
 
   // `repaired` is an activation written before it recorded the ledger it owns:
