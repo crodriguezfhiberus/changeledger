@@ -745,3 +745,197 @@ test('20261012-125611 CR3: a remote minimum the CLI satisfies fast-forwards as b
   assert.equal(code, 0, `${out}${err}`);
   assert.equal(refOid(a, STATE_REF), published, 'the local ref advances to the remote revision');
 });
+
+// --- 20261012-141809: sync refuses a revision that drops a local path ---------
+
+const STATE = '.changeledger-state';
+const BETA_PATH = `${STATE}/changes/20261012-000002-beta.md`;
+const SPEC_PATH = `${STATE}/specs/demo-spec.md`;
+const RELEASE_PATH = `${STATE}/releases/0.1.0.yml`;
+const USAGE_PATH = `${STATE}/usage/20261012-000002--20261012T000000Z-0a1b2c3d.json`;
+const UNKNOWN_PATH = `${STATE}/future/a.json`;
+
+// Changes `alpha` (20260808-000001) and `beta`, a spec, a release, a usage
+// record and an entry of the unknown collection `future`.
+function identityStateFiles() {
+  return {
+    ...listableStateFiles(),
+    [BETA_PATH]: ledgerChangeText({ id: '20261012-000002' }),
+    [USAGE_PATH]: '{"schema":1,"recorded_by":"alice"}\n',
+    [UNKNOWN_PATH]: '{"written_by":"a later ChangeLedger"}\n',
+  };
+}
+
+function identityFixture(t) {
+  const fixture = syncFixture({ files: identityStateFiles() });
+  for (const dir of [fixture.remote, fixture.a, path.dirname(fixture.b)]) {
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  }
+  return fixture;
+}
+
+// Publishes from `b`, with raw git, a descendant of its state tip whose tree is
+// exactly `files`: what a foreign writer could push.
+function publishRaw(b, files, message) {
+  const revision = commitTree(b, buildTree(b, files), {
+    parents: [refOid(b, STATE_REF)],
+    message,
+  });
+  updateRef(b, STATE_REF, revision);
+  git(b, ['push', '-q', 'origin', STATE_REF]);
+  return revision;
+}
+
+function without(files, dropped) {
+  const { [dropped]: _dropped, ...rest } = files;
+  return rest;
+}
+
+const adoptedNothing = (subject, verb, dropped) =>
+  `Error: ${subject} ${verb} "${dropped}", present in the local state; sync adopted nothing`;
+
+test('20261012-141809 CR1: a fast-forward does not adopt a revision that drops a change', (t) => {
+  const { remote, a, b } = identityFixture(t);
+  const dropped = publishRaw(b, without(identityStateFiles(), BETA_PATH), 'chore: drop beta');
+  const localBefore = refOid(a, STATE_REF);
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, `sync exited 0 over a dropped change: ${out}`);
+  assert.ok(err.includes(adoptedNothing(`state revision ${dropped}`, 'drops', BETA_PATH)), err);
+  assert.equal(refOid(a, STATE_REF), localBefore, 'the local state ref must keep its oid');
+  assert.ok(listedIds(a).includes('20261012-000002'), 'list --all must still show beta');
+  assert.equal(refOid(remote, STATE_REF), dropped, 'the remote must not change');
+});
+
+for (const [label, droppedPath] of [
+  ['a spec', SPEC_PATH],
+  ['a release', RELEASE_PATH],
+  ['a usage record', USAGE_PATH],
+  ['an unknown collection entry', UNKNOWN_PATH],
+]) {
+  test(`20261012-141809 CR2: a fast-forward does not adopt a revision that drops ${label}`, (t) => {
+    const { a, b } = identityFixture(t);
+    const dropped = publishRaw(b, without(identityStateFiles(), droppedPath), 'chore: drop one');
+    const localBefore = refOid(a, STATE_REF);
+
+    const { code, out, err } = cli(a, 'sync');
+
+    assert.notEqual(code, 0, `sync exited 0 over a dropped path: ${out}`);
+    assert.ok(err.includes(adoptedNothing(`state revision ${dropped}`, 'drops', droppedPath)), err);
+    assert.equal(refOid(a, STATE_REF), localBefore, 'the local state ref must keep its oid');
+  });
+}
+
+test('20261012-141809 CR3: a reconciliation does not publish a tree that drops identities', (t) => {
+  const { remote, a, b } = identityFixture(t);
+  const localTip = writeDocument(
+    a,
+    'changes/20260808-000001-change.md',
+    `${changeText()}\nEdit.\n`,
+  );
+  const dropped = publishRaw(
+    b,
+    without(without(identityStateFiles(), BETA_PATH), USAGE_PATH),
+    'chore: drop beta and a usage record',
+  );
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, `sync exited 0 over a lossy merge: ${out}`);
+  // `changes/` sorts before `usage/`: the first lost path is beta.
+  assert.ok(err.includes(adoptedNothing('merged state', 'drops', BETA_PATH)), err);
+  assert.deepEqual(commitsWithParents(a, [localTip, dropped]), [], 'no merge commit');
+  assert.equal(refOid(a, STATE_REF), localTip, 'the local state ref must keep its oid');
+  assert.equal(refOid(remote, STATE_REF), dropped, 'the remote must not change');
+});
+
+for (const [label, droppedPath] of [
+  ['a spec', SPEC_PATH],
+  ['a release', RELEASE_PATH],
+  ['a usage record', USAGE_PATH],
+]) {
+  test(`20261012-141809 CR3: a reconciliation does not publish a tree that drops ${label}`, (t) => {
+    const { remote, a, b } = identityFixture(t);
+    const localTip = addChange(a, '20261012-000006');
+    const dropped = publishRaw(b, without(identityStateFiles(), droppedPath), 'chore: drop one');
+
+    const { code, out, err } = cli(a, 'sync');
+
+    assert.notEqual(code, 0, `sync exited 0 over a lossy merge: ${out}`);
+    assert.ok(err.includes(adoptedNothing('merged state', 'drops', droppedPath)), err);
+    assert.deepEqual(commitsWithParents(a, [localTip, dropped]), [], 'no merge commit');
+    assert.equal(refOid(a, STATE_REF), localTip, 'the local state ref must keep its oid');
+    assert.equal(refOid(remote, STATE_REF), dropped, 'the remote must not change');
+  });
+}
+
+test('20261012-141809 CR4: a remote that adds a change and edits another fast-forwards', (t) => {
+  const { remote, a, b } = identityFixture(t);
+  addChange(b, '20261012-000003');
+  writeDocument(b, 'changes/20260808-000001-change.md', `${changeText()}\nEdit.\n`);
+  assert.equal(cli(b, 'sync').code, 0, 'the other clone publishes first');
+  const published = refOid(remote, STATE_REF);
+  assert.notEqual(refOid(a, STATE_REF), published, 'the remote really is ahead');
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.equal(code, 0, `${out}${err}`);
+  assert.equal(refOid(a, STATE_REF), published, 'the local ref advances to the remote revision');
+});
+
+test('20261012-141809 CR5: a merge that drops an unknown entry keeps its own diagnostic', (t) => {
+  const { remote, a, b } = identityFixture(t);
+  const dropped = publishRaw(b, without(identityStateFiles(), UNKNOWN_PATH), 'chore: drop');
+  const localTip = addChange(a, '20261012-000004');
+
+  const { code, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, err);
+  assert.ok(
+    err.includes(
+      `Error: merged state drops "${UNKNOWN_PATH}", an entry of a collection this ChangeLedger does not know (future); update the installation before syncing`,
+    ),
+    err,
+  );
+  assert.deepEqual(commitsWithParents(a, [localTip, dropped]), [], 'no merge commit');
+  assert.equal(refOid(a, STATE_REF), localTip, 'the local ref must not move');
+  assert.equal(refOid(remote, STATE_REF), dropped, 'nothing was published');
+});
+
+const rewrittenUsage = () => ({
+  ...identityStateFiles(),
+  [USAGE_PATH]: '{"schema":1,"recorded_by":"mallory"}\n',
+});
+
+test('20261012-141809 CR6: a fast-forward does not adopt a rewritten usage record', (t) => {
+  const { remote, a, b } = identityFixture(t);
+  const rewritten = publishRaw(b, rewrittenUsage(), 'chore: rewrite a usage record');
+  const localBefore = refOid(a, STATE_REF);
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, `sync exited 0 over a rewritten usage record: ${out}`);
+  assert.ok(
+    err.includes(
+      adoptedNothing(`state revision ${rewritten}`, 'rewrites usage record', USAGE_PATH),
+    ),
+    err,
+  );
+  assert.equal(refOid(a, STATE_REF), localBefore, 'the local state ref must keep its oid');
+  assert.equal(refOid(remote, STATE_REF), rewritten, 'the remote must not change');
+});
+
+test('20261012-141809 CR6: a reconciliation does not publish a rewritten usage record', (t) => {
+  const { remote, a, b } = identityFixture(t);
+  const localTip = addChange(a, '20261012-000005');
+  const rewritten = publishRaw(b, rewrittenUsage(), 'chore: rewrite a usage record');
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, `sync exited 0 over a rewritten usage record: ${out}`);
+  assert.ok(err.includes(adoptedNothing('merged state', 'rewrites usage record', USAGE_PATH)), err);
+  assert.deepEqual(commitsWithParents(a, [localTip, rewritten]), [], 'no merge commit');
+  assert.equal(refOid(a, STATE_REF), localTip, 'the local state ref must keep its oid');
+  assert.equal(refOid(remote, STATE_REF), rewritten, 'the remote must not change');
+});
