@@ -1841,6 +1841,42 @@ test('20261012-141850 CR2: a project selected while the hit loads does not lend 
   });
 });
 
+test('20261012-141850 CR3: selecting another project while the hit loads opens no change with its id', async () => {
+  await withDetailFixture(async (fixture, tick) => {
+    const id = '20261012-130000';
+    assert.equal(await load(async () => alphaPayloadText()), true);
+    addBetaProject();
+    appState.projectsList = [
+      ...appState.projectsList,
+      { id: 'gamma', name: 'Gamma', path: '/repos/gamma', alive: true },
+    ];
+    const beta = deferred();
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/search')) return betaSearchHit(id);
+        if (String(url).startsWith('/api/repo?project=beta')) return beta.promise;
+        throw new Error(`unexpected request ${url}`);
+      },
+      () =>
+        withGlobalSearch(tick, async () => {
+          const opened = clickSearchHit(fixture);
+          await tick();
+          assert.equal(appState.currentProject, 'beta');
+          const gammaText = projectPayloadText('gamma', { id, title: 'Gamma change', type: 'bug' });
+          assert.equal(
+            await selectViewerProject('gamma', { loadProject: () => load(async () => gammaText) }),
+            true,
+          );
+          const betaText = projectPayloadText('beta', { id, title: 'Beta change', type: 'bug' });
+          beta.resolve({ ok: true, status: 200, text: async () => betaText });
+          await opened;
+          assert.equal(appState.currentProject, 'gamma');
+          assert.equal(shownChangeDetail(fixture), null, 'no gamma change opens for the beta hit');
+        }),
+    );
+  });
+});
+
 test('20261012-141850 CR1/CR2: a global search hit into another project that loads opens that project change', async () => {
   await withDetailFixture(async (fixture, tick) => {
     await openAlphaDetail(fixture);

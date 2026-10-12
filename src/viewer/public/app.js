@@ -1050,10 +1050,12 @@ async function gotoChange(proj, changeId) {
     $('#project').value = match.id;
     await load();
   }
+  // Another project selected while this one loaded owns the view now; its
+  // payload can hold a change with the same id.
+  if (state.currentProject !== match.id) return;
   // Global search hides the view where the load error is painted, so a toast
-  // carries it there; the project check skips an error of a project selected
-  // while this one loaded.
-  if (state.globalMode && state.currentProject === match.id && state.loadError) {
+  // carries it there.
+  if (state.globalMode && state.loadError) {
     showToast(`Could not load project "${match.name}": ${state.loadError}`);
   }
   openDetail(changeId);
