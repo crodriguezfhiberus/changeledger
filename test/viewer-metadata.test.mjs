@@ -1658,6 +1658,221 @@ test('20261012-125604 CR5/CR6: switching back to the project whose payload is he
   });
 });
 
+const SHARED_CHANGE_ID = '20261012-120000';
+
+// The load-error fixture plus the detail overlay, removing the page-level
+// `detail-open` class an opened detail leaves when a test fails before closing it.
+const withDetailFixture = (run) =>
+  withFailedLoadFixture(async (fixture, tick) => {
+    fixture.insertAdjacentHTML(
+      'beforeend',
+      '<div id="overlay" class="hidden"><article id="detail"></article></div><div id="toast-container"></div>',
+    );
+    try {
+      await run(fixture, tick);
+    } finally {
+      document.documentElement.classList.remove('detail-open');
+    }
+  });
+
+// The id pill of the shown change detail, or null when the overlay is hidden.
+const shownChangeDetail = (fixture) =>
+  fixture.querySelector('#overlay').classList.contains('hidden')
+    ? null
+    : (fixture.querySelector('#detail .detail-meta .pill')?.textContent ?? null);
+
+const alphaLinkedToBetaText = () =>
+  projectPayloadText('alpha', {
+    id: SHARED_CHANGE_ID,
+    title: 'Alpha change',
+    type: 'bug',
+    depends_on: ['beta:20261012-130000'],
+  });
+
+const openAlphaDetail = async (fixture, payloadText = alphaPayloadText()) => {
+  assert.equal(await load(async () => payloadText), true);
+  fixture.querySelector('#board .card').click();
+  assert.equal(shownChangeDetail(fixture), `#${SHARED_CHANGE_ID}`);
+  addBetaProject();
+};
+
+const betaSearchHit = (id) => ({
+  json: async () => [
+    {
+      project: { id: 'beta', name: 'Beta' },
+      matches: [{ id, type: 'bug', title: 'Beta hit', status: 'draft' }],
+    },
+  ],
+});
+
+// Runs with global search active on "Beta", restoring the previous search state.
+async function withGlobalSearch(tick, run) {
+  const previous = { globalMode: appState.globalMode, text: appState.filters.text };
+  try {
+    appState.globalMode = true;
+    appState.filters.text = 'Beta';
+    syncViewerShell();
+    await tick();
+    await run();
+  } finally {
+    appState.globalMode = previous.globalMode;
+    appState.filters.text = previous.text;
+  }
+}
+
+const clickSearchHit = (fixture) => fixture.querySelector('#global .search-hit').onclick();
+
+const clickGlobalSearchHit = (fixture, tick) =>
+  withGlobalSearch(tick, () => clickSearchHit(fixture));
+
+const toasts = (fixture) =>
+  [...fixture.querySelectorAll('#toast-container .toast')].map((toast) => toast.textContent);
+
+const BETA_LOAD_TOAST = 'Could not load project "Beta": boom';
+
+test('20261012-141850 CR1: selecting another project closes the previous project change detail', async () => {
+  await withDetailFixture(async (fixture) => {
+    await openAlphaDetail(fixture);
+    const pending = deferred();
+    const selected = selectViewerProject('beta', {
+      loadProject: () => load(() => pending.promise),
+    });
+    try {
+      assert.equal(shownChangeDetail(fixture), null, 'no alpha detail while beta loads');
+    } finally {
+      pending.reject(new Error('boom'));
+      assert.equal(await selected, false);
+    }
+    assert.equal(shownChangeDetail(fixture), null, 'no alpha detail after beta fails');
+  });
+});
+
+test('20261012-141850 CR1: a detail link into another project that fails to load closes the previous project detail', async () => {
+  await withDetailFixture(async (fixture, tick) => {
+    await openAlphaDetail(fixture, alphaLinkedToBetaText());
+    const pending = deferred();
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/repo?project=beta')) return pending.promise;
+        throw new Error(`unexpected request ${url}`);
+      },
+      async () => {
+        fixture.querySelector('#detail [data-external="beta:20261012-130000"]').click();
+        await tick();
+        assert.equal(appState.currentProject, 'beta');
+        try {
+          assert.equal(shownChangeDetail(fixture), null, 'no alpha detail while beta loads');
+        } finally {
+          pending.resolve(failedRepoResponse());
+          await tick();
+        }
+        assert.equal(shownChangeDetail(fixture), null, 'no alpha detail after beta fails');
+        // Outside global search the board already shows the error.
+        assert.match(fixture.querySelector('#board').textContent, /boom/);
+        assert.deepEqual(toasts(fixture), [], 'no toast repeats the board error');
+      },
+    );
+  });
+});
+
+test('20261012-141850 CR2: a global search hit whose project fails to load opens no change with its id', async () => {
+  await withDetailFixture(async (fixture, tick) => {
+    assert.equal(await load(async () => alphaPayloadText()), true);
+    addBetaProject();
+    let betaLoads = 0;
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/search')) return betaSearchHit(SHARED_CHANGE_ID);
+        if (String(url).startsWith('/api/repo?project=beta')) {
+          betaLoads += 1;
+          return failedRepoResponse();
+        }
+        throw new Error(`unexpected request ${url}`);
+      },
+      () =>
+        withGlobalSearch(tick, async () => {
+          await clickSearchHit(fixture);
+          assert.equal(appState.currentProject, 'beta');
+          assert.equal(shownChangeDetail(fixture), null, 'the alpha change is not opened');
+          assert.deepEqual(toasts(fixture), [BETA_LOAD_TOAST]);
+          assert.equal(appState.globalMode, true, 'global search stays active');
+          assert.equal(fixture.querySelector('#global').classList.contains('hidden'), false);
+          // The same hit again: beta is already selected, so it opens without reloading.
+          await clickSearchHit(fixture);
+          assert.equal(betaLoads, 1, 'the second hit does not reload beta');
+          assert.equal(shownChangeDetail(fixture), null, 'the alpha change is not opened again');
+          assert.deepEqual(toasts(fixture), [BETA_LOAD_TOAST, BETA_LOAD_TOAST]);
+        }),
+    );
+  });
+});
+
+test('20261012-141850 CR2: a project selected while the hit loads does not lend its load error to the hit toast', async () => {
+  await withDetailFixture(async (fixture, tick) => {
+    assert.equal(await load(async () => alphaPayloadText()), true);
+    addBetaProject();
+    appState.projectsList = [
+      ...appState.projectsList,
+      { id: 'gamma', name: 'Gamma', path: '/repos/gamma', alive: true },
+    ];
+    const beta = deferred();
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/search')) return betaSearchHit(SHARED_CHANGE_ID);
+        if (String(url).startsWith('/api/repo?project=beta')) return beta.promise;
+        throw new Error(`unexpected request ${url}`);
+      },
+      () =>
+        withGlobalSearch(tick, async () => {
+          const opened = clickSearchHit(fixture);
+          await tick();
+          assert.equal(
+            await selectViewerProject('gamma', {
+              loadProject: () => load(failingLoad),
+            }),
+            false,
+          );
+          beta.resolve(failedRepoResponse());
+          await opened;
+          assert.equal(appState.currentProject, 'gamma');
+          assert.deepEqual(toasts(fixture), []);
+        }),
+    );
+  });
+});
+
+test('20261012-141850 CR1/CR2: a global search hit into another project that loads opens that project change', async () => {
+  await withDetailFixture(async (fixture, tick) => {
+    await openAlphaDetail(fixture);
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/search')) return betaSearchHit(SHARED_CHANGE_ID);
+        if (String(url).startsWith('/api/repo?project=beta')) {
+          const text = projectPayloadText('beta', {
+            id: SHARED_CHANGE_ID,
+            title: 'Beta change',
+            type: 'feature',
+          });
+          return {
+            ok: true,
+            status: 200,
+            text: async () => text,
+            json: async () => JSON.parse(text),
+          };
+        }
+        throw new Error(`unexpected request ${url}`);
+      },
+      async () => {
+        await clickGlobalSearchHit(fixture, tick);
+        assert.equal(appState.currentProject, 'beta');
+        assert.equal(shownChangeDetail(fixture), `#${SHARED_CHANGE_ID}`);
+        assert.equal(fixture.querySelector('#detail h1').textContent, 'Beta change');
+        assert.deepEqual(toasts(fixture), [], 'a successful load raises no toast');
+      },
+    );
+  });
+});
+
 test('175732 CR1: a payload in id/type/status does not create active HTML in a card', () => {
   const host = parse(card({ ...baseChange(), id: XSS, type: XSS, status: XSS }));
   assert.equal(host.querySelector('img'), null, 'no injected <img>');
@@ -4111,6 +4326,7 @@ test('161656 CR4/CR5: validation and reopen use detail path and reject foreign r
       },
       async () => {
         appState.repo = {
+          project_id: 'detail-status',
           changes: [{ ...viewerChange('validation', 'Validation'), status: 'in-validation' }],
           specs: [],
         };
@@ -4120,6 +4336,7 @@ test('161656 CR4/CR5: validation and reopen use detail path and reject foreign r
         assert.equal(fixture.querySelector('#overlay').classList.contains('hidden'), false);
 
         appState.repo = {
+          project_id: 'detail-status',
           changes: [{ ...viewerChange('reopen', 'Reopen'), status: 'done' }],
           specs: [],
         };
@@ -4177,11 +4394,11 @@ test('161656 CR1/CR4: late git refs cannot render or clear another project detai
       },
       async () => {
         appState.currentProject = 'refs-a';
-        appState.repo = { changes: [viewerChange('a1', 'Alpha')], specs: [] };
+        appState.repo = { project_id: 'refs-a', changes: [viewerChange('a1', 'Alpha')], specs: [] };
         openChangeById('a1');
 
         appState.currentProject = 'refs-b';
-        appState.repo = { changes: [viewerChange('b1', 'Beta')], specs: [] };
+        appState.repo = { project_id: 'refs-b', changes: [viewerChange('b1', 'Beta')], specs: [] };
         openChangeById('b1');
 
         requests.get('refs-b:b1').response.resolve({
@@ -4230,6 +4447,7 @@ test('161656 CR1: only the latest refs request for the visible change can apply'
     appState.projectsList = [{ id: 'refs-one', name: 'One', path: '/repos/one', alive: true }];
     appState.currentProject = 'refs-one';
     appState.repo = {
+      project_id: 'refs-one',
       changes: [viewerChange('old', 'Old detail'), viewerChange('new', 'New detail')],
       specs: [],
     };
