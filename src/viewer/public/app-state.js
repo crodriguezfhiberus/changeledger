@@ -6,6 +6,7 @@ const VALID_SORT_KEYS = new Set(['id', 'title', 'type', 'status', 'progress', 'd
 const VALID_DETAIL_MODES = new Set(['side', 'floating']);
 const VALID_DETAIL_SIZES = new Set(['compact', 'wide', 'full']);
 let storage = null;
+let projectSelected = () => {};
 
 const emptyProjectFilters = () => ({
   types: [],
@@ -161,6 +162,12 @@ export function restoreViewerState(storageLike) {
   return true;
 }
 
+// Called after `selectProject`, and after `initializeProjects` when it changes
+// the selected project; app.js registers the shell update it needs.
+export function setProjectSelectedListener(listener) {
+  projectSelected = listener;
+}
+
 export function initializeProjects(projects, serverCurrent, { exact = false } = {}) {
   state.projectsList = projects;
   const alive = new Set(projects.filter((project) => project.alive).map((project) => project.id));
@@ -176,6 +183,7 @@ export function initializeProjects(projects, serverCurrent, { exact = false } = 
     saveCurrentProjectFilters();
     state.currentProject = selected;
     if (selected) applyProjectFilters(selected);
+    projectSelected();
   }
   if (!selected) state.globalMode = false;
   persistViewerState();
@@ -324,6 +332,7 @@ export function selectProject(id) {
   state.loadError = null;
   applyProjectFilters(id);
   persistViewerState();
+  projectSelected();
 }
 
 export function sortBoardColumnChanges(changes, descending = false) {

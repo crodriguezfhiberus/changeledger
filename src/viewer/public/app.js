@@ -27,6 +27,7 @@ import {
   selectProject,
   setDetailPresentation,
   setLedgerCategory,
+  setProjectSelectedListener,
   setRepo,
   setSortKey,
   setTextFilter,
@@ -213,7 +214,6 @@ export function load(requestRepo = getRepo, applyRepo = applyLoadedRepo, { polli
       if (hasProjectProvenance(e.payload) && !matchesProjectProvenance(e.payload, target))
         return false;
       state.loadError = e.message;
-      dropForeignProjectShell();
       if (state.currentView !== 'projects') paintLoadError();
       return false;
     }
@@ -241,14 +241,19 @@ function paintLoadError(message = state.loadError) {
   else litRender(html`<p style="color:var(--bug);padding:20px">${message}</p>`, root);
 }
 
-// `selectProject` keeps the previous project's payload; while the selected one
-// is not loaded, the filter menus and the invalid-documents warning stop
-// showing that payload's values.
-function dropForeignProjectShell() {
-  if (selectedRepo()) return;
+// app-state calls this after `selectProject`, and after `initializeProjects`
+// changes the selection (see `setProjectSelectedListener`). `selectProject`
+// keeps the previous project's payload, so the filter menus and the
+// invalid-documents warning are rebuilt from `selectedRepo()`: empty while that
+// payload is another project's. Without the filter hosts in the document (tests
+// that import this module) it returns.
+const FILTER_HOSTS = ['#lang', '#type-filter', '#owner-filter', '#status-filter'];
+function syncSelectedProjectShell() {
+  if (!FILTER_HOSTS.every((selector) => $(selector))) return;
   hydrateFilters();
-  renderChangeErrors([]);
+  renderChangeErrors(selectedRepo()?.change_errors ?? []);
 }
+setProjectSelectedListener(syncSelectedProjectShell);
 
 export function showNoProjects(root = document) {
   setView('board');
@@ -283,9 +288,8 @@ function renderChangeErrors(errors = [], root = document) {
   );
 }
 
-// Rebuilt on each project load (types/statuses can differ per project), and on
-// a failed load of a project whose payload is not held, so the menus stop
-// listing the previous project's types, owners and statuses.
+// Rebuilt when a project payload is applied (types/statuses can differ per
+// project), and by `syncSelectedProjectShell` after a project selection.
 function hydrateFilters() {
   const repo = selectedRepo();
   $('#lang').textContent = repo?.language ?? '';
@@ -2382,7 +2386,6 @@ export function activateView(v, { renderContent = true, historyMode = 'push' } =
 
 export async function selectViewerProject(nextProject, { loadProject = load } = {}) {
   selectProject(nextProject);
-  dropForeignProjectShell();
   openedSpecName = null;
   ledgerBrowser.clearSelection();
   const selector = $('#project');

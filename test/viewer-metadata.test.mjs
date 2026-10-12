@@ -1497,6 +1497,167 @@ test('20261012-125604 CR6: a failed reload of the loaded project keeps its own f
   });
 });
 
+const loadAlphaWithInvalidDocument = async (fixture) => {
+  assert.equal(await load(async () => alphaWithInvalidDocumentText()), true);
+  assert.deepEqual(filterChoices(fixture, '#type-filter'), ['bug']);
+  assert.match(fixture.querySelector('#change-errors').textContent, /broken\.md/);
+  addBetaProject();
+};
+
+const assertNoAlphaShell = (fixture, when) => {
+  assert.deepEqual(
+    filterChoices(fixture, '#type-filter'),
+    [],
+    `type offers no alpha values ${when}`,
+  );
+  assert.deepEqual(
+    filterChoices(fixture, '#owner-filter'),
+    [],
+    `owner offers no alpha values ${when}`,
+  );
+  assert.equal(
+    fixture.querySelector('#change-errors')?.textContent ?? null,
+    null,
+    `no alpha warning ${when}`,
+  );
+};
+
+const failedRepoResponse = () => ({
+  ok: false,
+  status: 500,
+  json: async () => ({ error: 'boom' }),
+});
+
+test('20261012-125604 CR5/CR6: route restoration in flight shows no previous project filters or warning', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const pending = deferred();
+    const restored = restoreLedgerRouteSelection(
+      { project: 'beta', category: 'specs', doc: null },
+      {
+        root: fixture.querySelector('#ledger'),
+        ensureProject: async () => ({ ok: await load(() => pending.promise) }),
+      },
+    );
+    try {
+      assertNoAlphaShell(fixture, 'while beta loads');
+    } finally {
+      pending.reject(new Error('boom'));
+      assert.equal(await restored, false);
+    }
+    assertNoAlphaShell(fixture, 'after beta fails');
+  });
+});
+
+test('20261012-125604 CR5/CR6: a global search hit in flight shows no previous project filters or warning', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const pending = deferred();
+    const previous = { globalMode: appState.globalMode, text: appState.filters.text };
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/search')) {
+          return {
+            json: async () => [
+              {
+                project: { id: 'beta', name: 'Beta' },
+                matches: [
+                  { id: '20261012-130000', type: 'feature', title: 'Beta hit', status: 'draft' },
+                ],
+              },
+            ],
+          };
+        }
+        if (String(url).startsWith('/api/repo?project=beta')) return pending.promise;
+        throw new Error(`unexpected request ${url}`);
+      },
+      async () => {
+        try {
+          appState.globalMode = true;
+          appState.filters.text = 'Beta';
+          syncViewerShell();
+          await tick();
+          const opened = fixture.querySelector('#global .search-hit').onclick();
+          await tick();
+          try {
+            assertNoAlphaShell(fixture, 'while beta loads');
+          } finally {
+            pending.resolve(failedRepoResponse());
+            await opened;
+          }
+          assertNoAlphaShell(fixture, 'after beta fails');
+        } finally {
+          appState.globalMode = previous.globalMode;
+          appState.filters.text = previous.text;
+        }
+      },
+    );
+  });
+});
+
+test('20261012-125604 CR5/CR6: a registry refresh that selects another project shows no previous project filters or warning', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const pending = deferred();
+    const root = document.createElement('form');
+    root.innerHTML = '<button>Clean</button><p class="project-clean-error"></p>';
+    await withMockedFetch(
+      async (url) => {
+        if (url === '/api/projects') {
+          return {
+            ok: true,
+            json: async () => ({
+              projects: [{ id: 'beta', name: 'Beta', path: '/repos/beta', alive: true }],
+              current: null,
+              localOnly: false,
+            }),
+          };
+        }
+        throw new Error(`unexpected request ${url}`);
+      },
+      async () => {
+        const cleaned = cleanMissingProjectsFromView(root, ['alpha'], {
+          confirm: async () => true,
+          request: async () => ({
+            ok: true,
+            json: async () => ({ removedIds: ['alpha'], removed: 1, skipped: 0 }),
+          }),
+          reload: () => load(() => pending.promise),
+        });
+        await tick();
+        assert.equal(appState.currentProject, 'beta');
+        try {
+          assertNoAlphaShell(fixture, 'while beta loads');
+        } finally {
+          pending.reject(new Error('boom'));
+          await cleaned;
+        }
+        assertNoAlphaShell(fixture, 'after beta fails');
+      },
+    );
+  });
+});
+
+test('20261012-125604 CR5/CR6: switching back to the project whose payload is held shows its filters and warning', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const beta = deferred();
+    const alpha = deferred();
+    const toBeta = selectViewerProject('beta', { loadProject: () => load(() => beta.promise) });
+    assertNoAlphaShell(fixture, 'while beta loads');
+    const toAlpha = selectViewerProject('alpha', { loadProject: () => load(() => alpha.promise) });
+    try {
+      assert.deepEqual(filterChoices(fixture, '#type-filter'), ['bug']);
+      assert.deepEqual(filterChoices(fixture, '#owner-filter'), ['ana']);
+      assert.match(fixture.querySelector('#change-errors')?.textContent ?? '', /broken\.md/);
+    } finally {
+      beta.reject(new Error('boom'));
+      alpha.reject(new Error('boom'));
+      await Promise.all([toBeta, toAlpha]);
+    }
+  });
+});
+
 test('175732 CR1: a payload in id/type/status does not create active HTML in a card', () => {
   const host = parse(card({ ...baseChange(), id: XSS, type: XSS, status: XSS }));
   assert.equal(host.querySelector('img'), null, 'no injected <img>');
