@@ -198,15 +198,17 @@ export function load(requestRepo = getRepo, applyRepo = applyLoadedRepo) {
       if (stale()) return supersedingLoad();
       const payload = JSON.parse(text);
       if (!matchesProjectProvenance(payload, target)) return false;
-      if (text === state.lastJson) return true;
+      const recovering = state.loadError !== null;
+      state.loadError = null;
+      if (text === state.lastJson && !recovering) return true;
       applyRepo(text);
       return true;
     } catch (e) {
       if (stale()) return supersedingLoad();
       if (hasProjectProvenance(e.payload) && !matchesProjectProvenance(e.payload, target))
         return false;
-      if (state.currentView === 'ledger') renderLedgerRouteError($('#ledger'), e.message);
-      else litRender(html`<p style="color:var(--bug);padding:20px">${e.message}</p>`, $('#board'));
+      state.loadError = e.message;
+      if (state.currentView !== 'projects') paintLoadError();
       return false;
     }
   })();
@@ -223,6 +225,12 @@ function applyLoadedRepo(text) {
 
 const noProjectsMessage = () =>
   html`<p class="empty" style="padding:20px">No projects registered. Run <code>changeledger init</code> in a repo.</p>`;
+
+function paintLoadError(message = state.loadError) {
+  const root = $(`#${state.currentView}`);
+  if (state.currentView === 'ledger') renderLedgerRouteError(root, message);
+  else litRender(html`<p style="color:var(--bug);padding:20px">${message}</p>`, root);
+}
 
 export function showNoProjects(root = document) {
   setView('board');
@@ -414,7 +422,8 @@ function visibleChanges() {
 
 function render() {
   if (!state.repo && state.currentView !== 'projects') {
-    litRender(noProjectsMessage(), $(`#${state.currentView}`));
+    if (state.currentProject && state.loadError) paintLoadError();
+    else litRender(noProjectsMessage(), $(`#${state.currentView}`));
     return;
   }
   if (state.currentView === 'graph') renderGraph();
