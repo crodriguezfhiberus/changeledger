@@ -71,7 +71,11 @@ const {
 } = await import('../src/viewer/public/app.js');
 const { postCleanMissingProjects } = await import('../src/viewer/public/api.js');
 const { serialize } = await import('../src/viewer/domain.mjs');
-const { initializeProjects, state: appState } = await import('../src/viewer/public/app-state.js');
+const {
+  initializeProjects,
+  setTextFilter,
+  state: appState,
+} = await import('../src/viewer/public/app-state.js');
 const {
   approvalPanel,
   boardColumnHeader,
@@ -1032,6 +1036,204 @@ test('20261007-135148 CR2: the projects view still shows its own empty state wit
     appState.repo = previous.repo;
     appState.currentProject = previous.project;
     appState.currentView = previous.view;
+  }
+});
+
+const LOAD_ERROR_VIEWS = ['board', 'table', 'graph', 'ledger', 'metrics'];
+const NO_PROJECTS_TEXT = 'No projects registered. Run changeledger init in a repo.';
+
+async function withFailedLoadFixture(run) {
+  const fixture = viewerShell();
+  document.body.append(fixture);
+  const previous = {
+    repo: appState.repo,
+    project: appState.currentProject,
+    projects: appState.projectsList,
+    view: appState.currentView,
+    lastJson: appState.lastJson,
+    loadError: appState.loadError,
+  };
+  appState.repo = null;
+  appState.lastJson = '';
+  appState.loadError = null;
+  appState.currentProject = 'alpha';
+  appState.projectsList = [{ id: 'alpha', name: 'Alpha', path: '/repos/alpha', alive: true }];
+  appState.currentView = 'board';
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+  try {
+    await run(fixture, tick);
+  } finally {
+    fixture.remove();
+    appState.repo = previous.repo;
+    appState.currentProject = previous.project;
+    appState.projectsList = previous.projects;
+    appState.currentView = previous.view;
+    appState.lastJson = previous.lastJson;
+    appState.loadError = previous.loadError;
+  }
+}
+
+const failingLoad = async () => {
+  throw new Error('boom');
+};
+
+const recoveredPayloadText = () =>
+  JSON.stringify({
+    project_id: 'alpha',
+    repository_path: '/repos/alpha',
+    ...serialize({
+      repoRoot: '/repos/alpha',
+      config: { language: 'en', statuses: ['done'], types: { bug: {} } },
+      changes: [
+        {
+          frontmatter: {
+            id: '20260804-120000',
+            title: 'Recovered change',
+            type: 'bug',
+            status: 'done',
+            created: '2026-08-04T12:00:00Z',
+          },
+          stages: [],
+          tasks: [],
+          progress: { total: 0, done: 0, blocked: 0 },
+        },
+      ],
+      specs: [],
+      changeErrors: [],
+    }),
+  });
+
+test('20261007-172305 CR1: a failed project load shows its error in board, table, graph, ledger and metrics', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    assert.equal(await load(failingLoad), false);
+    for (const view of LOAD_ERROR_VIEWS) {
+      activateView(view, { historyMode: null });
+      await tick();
+      const text = fixture.querySelector(`#${view}`).textContent;
+      assert.match(text, /boom/, `${view} shows the load error after activation`);
+      assert.doesNotMatch(text, /No projects registered/, `${view} is not the empty state`);
+    }
+    for (const view of LOAD_ERROR_VIEWS) {
+      activateView(view, { historyMode: null });
+      await tick();
+      assert.equal(await load(failingLoad), false);
+      const text = fixture.querySelector(`#${view}`).textContent;
+      assert.match(text, /boom/, `${view} shows the load error when the load fails inside it`);
+      assert.doesNotMatch(text, /No projects registered/);
+    }
+  });
+});
+
+test('20261007-172305 CR2: a re-render does not cover the load error', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    await load(failingLoad);
+    assert.match(fixture.querySelector('#board').textContent, /boom/);
+    // The search box re-renders through the same render() that activateView calls.
+    try {
+      setTextFilter('anything');
+      activateView('board', { historyMode: null });
+      await tick();
+      const text = fixture.querySelector('#board').textContent;
+      assert.match(text, /boom/);
+      assert.doesNotMatch(text, /No projects registered/);
+    } finally {
+      setTextFilter('');
+    }
+  });
+});
+
+test('20261007-172305 CR3: a later successful load clears the error', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    await load(failingLoad);
+    activateView('table', { historyMode: null });
+    await tick();
+    assert.match(fixture.querySelector('#table').textContent, /boom/);
+    const text = recoveredPayloadText();
+    assert.equal(await load(async () => text), true);
+    const shown = fixture.querySelector('#table').textContent;
+    assert.match(shown, /Recovered change/);
+    assert.doesNotMatch(shown, /boom/);
+    assert.equal(appState.loadError, null);
+  });
+});
+
+test('20261007-172305 CR3: a failure after a loaded payload is cleared by the same payload', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    const text = recoveredPayloadText();
+    assert.equal(await load(async () => text), true);
+    assert.match(fixture.querySelector('#board').textContent, /Recovered change/);
+    assert.equal(await load(failingLoad), false);
+    assert.match(fixture.querySelector('#board').textContent, /boom/);
+    assert.equal(await load(async () => text), true);
+    const shown = fixture.querySelector('#board').textContent;
+    assert.match(shown, /Recovered change/);
+    assert.doesNotMatch(shown, /boom/);
+  });
+});
+
+test('20261007-172305 F1: a failed load of the selected project is not covered by the previous project payload', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    const text = recoveredPayloadText();
+    assert.equal(await load(async () => text), true);
+    appState.projectsList = [
+      ...appState.projectsList,
+      { id: 'beta', name: 'Beta', path: '/repos/beta', alive: true },
+    ];
+    await selectViewerProject('beta', { loadProject: () => load(failingLoad) });
+    try {
+      setTextFilter('anything');
+      for (const view of ['board', 'table', 'graph', 'ledger', 'metrics', 'board']) {
+        activateView(view, { historyMode: null });
+        await tick();
+        const shown = fixture.querySelector(`#${view}`).textContent;
+        assert.match(shown, /boom/, `${view} keeps the selected project error`);
+        assert.doesNotMatch(shown, /Recovered change/, `${view} hides the previous project`);
+      }
+    } finally {
+      setTextFilter('');
+    }
+    await selectViewerProject('alpha', { loadProject: () => load(async () => text) });
+    const shown = fixture.querySelector('#board').textContent;
+    assert.match(shown, /Recovered change/);
+    assert.doesNotMatch(shown, /boom/);
+  });
+});
+
+test('20261007-172305 CR3: selecting another project drops the previous project error', async () => {
+  await withFailedLoadFixture(async () => {
+    await load(failingLoad);
+    assert.equal(appState.loadError, 'boom');
+    appState.projectsList = [
+      ...appState.projectsList,
+      { id: 'beta', name: 'Beta', path: '/repos/beta', alive: true },
+    ];
+    await selectViewerProject('beta', { loadProject: async () => true });
+    assert.equal(appState.loadError, null);
+  });
+});
+
+test('20261007-172305 CR4: without a project the empty-state message stays', async () => {
+  const fixture = viewerShell();
+  document.body.append(fixture);
+  const previous = {
+    repo: appState.repo,
+    project: appState.currentProject,
+    view: appState.currentView,
+    loadError: appState.loadError,
+  };
+  appState.repo = null;
+  appState.currentProject = null;
+  appState.loadError = null;
+  try {
+    activateView('metrics', { historyMode: null });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    assert.equal(fixture.querySelector('#metrics').textContent.trim(), NO_PROJECTS_TEXT);
+  } finally {
+    fixture.remove();
+    appState.repo = previous.repo;
+    appState.currentProject = previous.project;
+    appState.currentView = previous.view;
+    appState.loadError = previous.loadError;
   }
 });
 

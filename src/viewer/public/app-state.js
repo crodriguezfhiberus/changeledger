@@ -20,6 +20,7 @@ const emptyProjectFilters = () => ({
 export const state = {
   repo: null,
   lastJson: '',
+  loadError: null,
   filters: {
     text: '',
     type: 'all',
@@ -312,6 +313,7 @@ export function selectProject(id) {
   saveCurrentProjectFilters();
   state.currentProject = id;
   state.lastJson = '';
+  state.loadError = null;
   applyProjectFilters(id);
   persistViewerState();
 }
