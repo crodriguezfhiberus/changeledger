@@ -256,7 +256,7 @@ function usageRecordIssue({ name, record, error }) {
   if (!parsed) return `name must follow ${USAGE_RECORD_NAME_FORM}`;
   if (error) return error;
   if (!isMapping(record)) return 'must be a JSON object';
-  for (const field of ['schema', 'change']) {
+  for (const field of ['schema', 'change', 'at']) {
     if (record[field] === undefined || record[field] === null) return `missing "${field}"`;
   }
   if (record.schema !== USAGE_RECORD_SCHEMA) {
@@ -264,6 +264,9 @@ function usageRecordIssue({ name, record, error }) {
   }
   if (String(record.change) !== parsed.change) {
     return `change "${record.change}" does not match the id "${parsed.change}" in its name`;
+  }
+  if (typeof record.at !== 'string' || !ISO_UTC.test(record.at)) {
+    return `at must be an ISO 8601 UTC instant, got ${JSON.stringify(record.at)}`;
   }
   return null;
 }

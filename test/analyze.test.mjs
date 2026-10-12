@@ -28,7 +28,7 @@ const at = (minute) => `2026-10-01T00:${String(minute).padStart(2, '0')}:00Z`;
 const s1 = (tokens) => usageSession('s1', { opus: { tokens, cost: tokens / 100 } });
 
 // A worktree-layout ledger outside any git repository, removed after the test.
-function ledger(t, { changes, records = [] }) {
+function ledger(t, { changes, records = [], rawRecords = [] }) {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'changeledger-analyze-'));
   t.after(() => fs.rmSync(root, { recursive: true, force: true }));
   const dir = path.join(root, '.changeledger');
@@ -40,12 +40,16 @@ function ledger(t, { changes, records = [] }) {
   for (const [id, options] of Object.entries(changes)) {
     fs.writeFileSync(path.join(dir, 'changes', `${id}-demo.md`), changeText(id, options));
   }
-  if (records.length) fs.mkdirSync(path.join(dir, 'usage'));
+  if (records.length || rawRecords.length) fs.mkdirSync(path.join(dir, 'usage'));
   for (const record of records) {
     fs.writeFileSync(
       path.join(dir, 'usage', usageRecordFileName(record)),
       `${JSON.stringify(record, null, 2)}\n`,
     );
+  }
+  // `[fileName, record]` pairs whose name cannot be derived from the record.
+  for (const [name, record] of rawRecords) {
+    fs.writeFileSync(path.join(dir, 'usage', name), `${JSON.stringify(record, null, 2)}\n`);
   }
   return (...args) => {
     const r = spawnSync(process.execPath, [bin, 'analyze', ...args], {
@@ -327,4 +331,24 @@ test('CR13 through the CLI: records that attribute no segment print no usage dat
   ]);
   const [change] = JSON.parse(analyze(A, '--json').out).changes;
   assert.deepEqual([change.records, change.total_tokens, change.cost_usd], [1, null, null]);
+});
+
+test('20261012-125617 CR3 through the CLI: analyze --json attributes nothing to a record whose at is not text', (t) => {
+  const analyze = ledger(t, {
+    changes: { [A]: { title: 'Alpha' } },
+    records: [
+      usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+    ],
+    rawRecords: [
+      [
+        `${A}--20261001T000200Z-0a1b2c3d.json`,
+        usageRecord({ change: A, at: 123, from: 'draft', to: 'approved', sessions: [s1(900)] }),
+      ],
+    ],
+  });
+  const { code, out, err } = analyze(A, '--json');
+  assert.equal(code, 0, err);
+  const [change] = JSON.parse(out).changes;
+  assert.equal(change.records, 1, out);
+  assert.deepEqual(change.segments, [], out);
 });

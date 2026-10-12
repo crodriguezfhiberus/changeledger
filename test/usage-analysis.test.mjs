@@ -1203,3 +1203,30 @@ test('20261007-172316 CR3: the exported record count is the records of analyze <
     assert.equal(counts.get(id) ?? 0, analysed.records, id);
   }
 });
+
+// 20261012-125617: a record whose `at` is the number 123 is not placed in the
+// analysis. The entry is built by hand because the helper derives the file
+// name from `at`.
+test('20261012-125617 CR3: a record whose at is not text closes no segment and is not counted', () => {
+  const valid = usageEntryOf(
+    usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+  );
+  const badAt = usageRecord({
+    change: A,
+    at: 123,
+    from: 'draft',
+    to: 'approved',
+    sessions: [s1(900)],
+  });
+  const noInstant = {
+    file: null,
+    name: `${A}--bad-at.json`,
+    change: A,
+    record: badAt,
+    error: null,
+  };
+  const usage = [valid, noInstant];
+  assert.deepEqual([...usageRecordCounts(usage)], [[A, 1]]);
+  const result = analyzeUsage({ changes: [changeDoc(A)], usage }, { id: A });
+  assert.deepEqual(segmentTotals(only(result)), []);
+});
