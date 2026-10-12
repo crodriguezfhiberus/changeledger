@@ -178,7 +178,8 @@ function loadActiveContent(snapshot, { isolateChangeErrors }) {
     specs,
     releases,
     usage,
-    state: { revision: snapshot.revision },
+    // The collections this CLI skipped (20261002-161641), for `check` to repeat.
+    state: { revision: snapshot.revision, unknownCollections: snapshot.unknownCollections },
   };
 }
 

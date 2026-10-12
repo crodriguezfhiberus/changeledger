@@ -23,6 +23,7 @@ import {
   defaultStateFiles,
   git,
   ledgerChangeText,
+  ledgerConfigText,
   ledgerSpecText,
   seedLedgerRepo,
   updateRef,
@@ -103,10 +104,10 @@ function activatedRepo({ files = listableStateFiles() } = {}) {
 // `refs/heads/changeledger/state` to `refs/remotes/origin/...` and creates no
 // local branch for it, and `sync` deliberately never takes that decision for a
 // checkout that is not activated yet.
-function syncFixture() {
+function syncFixture({ files } = {}) {
   const remote = tmpdir('changeledger-sync-remote-');
   initGitFixture(remote, { args: ['--bare', '-b', 'main'] });
-  const { root: a, revision } = activatedRepo();
+  const { root: a, revision } = activatedRepo({ files });
   git(a, ['remote', 'add', 'origin', remote]);
   git(a, ['push', '-q', 'origin', 'main', STATE_REF]);
 
@@ -570,4 +571,102 @@ test('20261002-133728: a colliding usage path is reported as a usage record', (t
 
   assert.notEqual(code, 0);
   assert.match(err, /- usage record usage\/20260808-000001--20261002T153233Z-0a1b2c3d\.json: /);
+});
+
+// --- 20261002-161641: a collection this CLI does not know travels intact -----
+
+const FUTURE_PATH = '.changeledger-state/future/a.json';
+const FUTURE_ID = '20260808-000001';
+const unknownWarning = (version) =>
+  `warning: the state ref holds collections ChangeLedger ${version} does not know (future); update the installation to use them`;
+const PACKAGE_VERSION = JSON.parse(
+  fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+).version;
+
+// A ledger a later ChangeLedger wrote: the full fixture config, one `approved`
+// change, and an entry in a collection this checkout's STATE_COLLECTION_EXTENSIONS
+// does not declare.
+function futureStateFiles() {
+  return {
+    ...listableStateFiles(),
+    '.changeledger-state/config.yml': ledgerConfigText,
+    [`.changeledger-state/changes/${FUTURE_ID}-change.md`]: ledgerChangeText({
+      id: FUTURE_ID,
+    }).replace('status: draft', 'status: approved'),
+    [FUTURE_PATH]: '{"written_by":"a later ChangeLedger"}\n',
+  };
+}
+
+function futureSyncFixture(t) {
+  const fixture = syncFixture({ files: futureStateFiles() });
+  for (const dir of [fixture.remote, fixture.a, path.dirname(fixture.b)]) {
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  }
+  return fixture;
+}
+
+function blobAt(root, revision, full) {
+  return git(root, ['rev-parse', `${revision}:${full}`]);
+}
+
+test('20261002-161641 CR6: the usual flow works over an unknown collection, and sync keeps it on both refs', (t) => {
+  const { remote, a, b, revision } = futureSyncFixture(t);
+  const original = blobAt(a, revision, FUTURE_PATH);
+  const steps = [
+    ['context'],
+    ['list', '--status', 'approved'],
+    ['status', FUTURE_ID, 'in-progress'],
+  ];
+  for (const args of steps) {
+    const { code, out, err } = cli(b, ...args);
+    const label = args.join(' ');
+    assert.equal(code, 0, `${label}: ${out}${err}`);
+    assert.equal(err.split(unknownWarning(PACKAGE_VERSION)).length - 1, 1, `${label}: ${err}`);
+    if (args[0] === 'list') assert.match(out, new RegExp(FUTURE_ID));
+  }
+  // The other clone moves too, so b's sync has to reconcile, not fast-forward.
+  addChange(a, '20261002-000002');
+  assert.equal(cli(a, 'sync').code, 0, 'the other clone publishes first');
+
+  const synced = cli(b, 'sync');
+  assert.equal(synced.code, 0, `${synced.out}${synced.err}`);
+  assert.match(synced.out, /Reconciled disjoint journals/);
+  assert.equal(synced.err.split(unknownWarning(PACKAGE_VERSION)).length - 1, 1, synced.err);
+
+  const local = refOid(b, STATE_REF);
+  assert.equal(refOid(remote, STATE_REF), local, 'the reconciliation is published');
+  assert.equal(blobAt(b, local, FUTURE_PATH), original, 'the local ref keeps the entry');
+  assert.equal(blobAt(remote, local, FUTURE_PATH), original, 'the remote ref keeps the entry');
+  const listed = JSON.parse(cli(b, 'list', '--all', '--json').out);
+  assert.deepEqual(
+    listed.map((change) => [change.id, change.status]),
+    [
+      [FUTURE_ID, 'in-progress'],
+      ['20261002-000002', 'draft'],
+    ],
+  );
+});
+
+test('20261002-161641 CR3: a sync whose merge would drop an unknown entry is refused, both refs unmoved', (t) => {
+  const { remote, a, b } = futureSyncFixture(t);
+  // The remote's side drops the entry with raw plumbing — what a foreign
+  // writer, or a later CLI that knows the collection, could publish.
+  const { [FUTURE_PATH]: _dropped, ...withoutFuture } = futureStateFiles();
+  const dropped = commitTree(b, buildTree(b, withoutFuture), {
+    parents: [refOid(b, STATE_REF)],
+    message: 'chore: drop the future entry',
+  });
+  updateRef(b, STATE_REF, dropped);
+  git(b, ['push', '-q', 'origin', STATE_REF]);
+  const localTip = addChange(a, '20261002-000003');
+
+  const { code, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, err);
+  assert.match(
+    err,
+    /merged state drops "\.changeledger-state\/future\/a\.json", an entry of a collection this ChangeLedger does not know/,
+  );
+  assert.equal(refOid(a, STATE_REF), localTip, 'the local ref must not move');
+  assert.equal(refOid(remote, STATE_REF), dropped, 'nothing was published');
 });

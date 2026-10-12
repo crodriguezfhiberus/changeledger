@@ -3,8 +3,10 @@ import { checkRepo, checkUsageGitConfig, frozenReason } from '../check.mjs';
 import { findChangeledgerDir, integrationBranch, loadEffectiveConfig } from '../config.mjs';
 import { getSchemaVersion, SUPPORTED_SCHEMA_VERSION } from '../config-migration.mjs';
 import { checkContract } from '../contract.mjs';
+import { VERSION } from '../framing.mjs';
 import { defaultBaseBranch, lintCommitRange } from '../git.mjs';
 import { loadRepo } from '../repo.mjs';
+import { STATE_ROOT, unknownCollectionsMessage } from '../state-store.mjs';
 
 // Declared integration branch, when a ChangeLedger repo (and the key) exists.
 // Outside a repo the lint still works on plain git, so absence is undefined,
@@ -85,6 +87,16 @@ export function check(args = [], cwd = process.cwd(), output = console) {
     warnings.push({
       file: '.changeledger/config.yml',
       message: `config schema ${schemaVersion} is outdated; run \`changeledger config migrate --dry-run\``,
+    });
+  }
+
+  // Collections this CLI does not know are not validated (20261002-161641);
+  // the repo-wide report repeats the warning the bin prints on stderr.
+  const unknownCollections = repo.state?.unknownCollections ?? [];
+  if (!id && unknownCollections.length > 0) {
+    warnings.push({
+      file: STATE_ROOT,
+      message: unknownCollectionsMessage(unknownCollections, VERSION),
     });
   }
 

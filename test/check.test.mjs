@@ -16,9 +16,11 @@ import {
   usageCollector,
 } from '../src/config.mjs';
 import { ensureReference } from '../src/contract.mjs';
+import { VERSION } from '../src/framing.mjs';
 import { LOG_EVENT_TYPES } from '../src/lifecycle.mjs';
 import { templatesDir } from '../src/paths.mjs';
 import { RELEASE_IMPACTS } from '../src/release.mjs';
+import { loadRepo } from '../src/repo.mjs';
 import { STATE_REF, writeActivation } from '../src/state-store.mjs';
 import { usageRecordText } from './helpers/ccusage.mjs';
 import { initGitFixture, sanitizedEnv } from './helpers/git-env.mjs';
@@ -3834,4 +3836,54 @@ test('20261002-133728 CR4: a record missing change or schema names the missing f
       [expected],
     );
   }
+});
+
+// --- 20261002-161641: check over a collection this CLI does not know ---------
+
+function futureCheckRepo(t, extra) {
+  const root = gitCheckRepo();
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const files = {
+    '.changeledger-state/manifest.yml': 'format_version: 1\nproject_id: demo\n',
+    '.changeledger-state/config.yml': fs.readFileSync(
+      path.join(root, '.changeledger', 'config.yml'),
+      'utf8',
+    ),
+    ...extra,
+  };
+  updateRef(root, STATE_REF, commitTree(root, buildTree(root, files), { message: 'chore: state' }));
+  writeActivation(root, { stateRef: STATE_REF });
+  return root;
+}
+
+test('20261002-161641 CR5: check does not validate an unknown collection and repeats the warning', (t) => {
+  const root = futureCheckRepo(t, {
+    '.changeledger-state/future/a.json': 'not json, and not ours to judge\n',
+  });
+  const { code, errors, warnings } = checkJson(root);
+  assert.equal(code, 0, JSON.stringify(errors));
+  assert.deepEqual(errors, []);
+  assert.deepEqual(warnings, [
+    {
+      file: '.changeledger-state',
+      message: `the state ref holds collections ChangeLedger ${VERSION} does not know (future); update the installation to use them`,
+    },
+  ]);
+});
+
+test('20261002-161641 CR5: check adds no warning when every collection is known', (t) => {
+  const [usageName, usageText] = VALID_RECORD;
+  const root = futureCheckRepo(t, {
+    [`.changeledger-state/changes/${USAGE_CHECK_ID}-known.md`]: `---\nid: "${USAGE_CHECK_ID}"\ntitle: Known\ntype: quick\nstatus: draft\ncreated: 2026-10-02T13:37:28Z\ndepends_on: []\n---\n\n## Request\n\nKnown.\n\n## Log\n`,
+    [`.changeledger-state/usage/${usageName}`]: usageText,
+  });
+  const { code, errors, warnings } = checkJson(root);
+  assert.equal(code, 0, JSON.stringify(errors));
+  assert.deepEqual(warnings, []);
+  const repo = loadRepo(root);
+  assert.deepEqual(
+    [repo.changes.length, repo.usage.length],
+    [1, 1],
+    'the ref holds a change and a usage record',
+  );
 });
