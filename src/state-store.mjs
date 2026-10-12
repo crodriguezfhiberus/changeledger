@@ -564,7 +564,7 @@ export function seedStateRef(repoRoot, { revision } = {}, run = capturedRun) {
 // from a remote's objects is untrusted input. An entry of an unknown collection
 // that either parent holds must be among `entries` by path (20261002-161641):
 // this CLI has no rule to judge whether dropping it is legitimate, so it
-// refuses the drop. Its blob may come from either side.
+// refuses the drop. The check is survival by path.
 export function commitMergedState(
   repoRoot,
   { expectedRevision, otherRevision, entries, message } = {},
