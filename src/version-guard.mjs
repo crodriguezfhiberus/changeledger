@@ -40,8 +40,9 @@ export function cliVersionError(config, installedVersion) {
 // when it may. Reads the effective config (the state ref once activated, never
 // the worktree marker). An unreadable effective config declares no minimum to
 // compare, so the guard stands aside: commands that actually need that config
-// still fail when they load it themselves, and `activate` must stay able to
-// repair a broken activation regardless.
+// still fail when they load it themselves. `activate` can still reach a broken
+// activation to repair it, and compares the minimum of the revision it adopts
+// itself (`assertCliAdmitted` in src/commands/activate.mjs).
 export function repoCliVersionError(repoRoot, changeledgerDir, installedVersion) {
   let config;
   try {
