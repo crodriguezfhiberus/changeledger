@@ -245,10 +245,12 @@ function paintLoadError(message = state.loadError) {
 // changes the selection (see `setProjectSelectedListener`). `selectProject`
 // keeps the previous project's payload, so the filter menus and the
 // invalid-documents warning are rebuilt from `selectedRepo()`: empty while that
-// payload is another project's. Without the filter hosts in the document (tests
-// that import this module) it returns.
+// payload is another project's. The detail overlay shows a document of the
+// previous selection, so it closes first. Without the filter hosts in the
+// document (tests that import this module) it returns after that.
 const FILTER_HOSTS = ['#lang', '#type-filter', '#owner-filter', '#status-filter'];
 function syncSelectedProjectShell() {
+  closeDetail();
   if (!FILTER_HOSTS.every((selector) => $(selector))) return;
   hydrateFilters();
   renderChangeErrors(selectedRepo()?.change_errors ?? []);
@@ -803,8 +805,11 @@ function renderOpenedDetail(content) {
   resetDetailScroll(detail);
 }
 
+// Looks the change up in `selectedRepo()`: after a failed load `state.repo` can
+// still hold another project's payload, and change ids can repeat across projects.
 function openDetail(id) {
-  const c = state.repo.changes.find((x) => String(x.id) === String(id));
+  const repo = selectedRepo();
+  const c = repo?.changes.find((x) => String(x.id) === String(id));
   if (!c) return;
   const projectTarget = captureProjectTarget(state.currentProject);
   const detailTarget = Object.freeze({
@@ -813,7 +818,7 @@ function openDetail(id) {
     revision: ++gitRefsRequestRevision,
   });
   openedChangeTarget = detailTarget;
-  const changes = state.repo.changes || [];
+  const changes = repo.changes || [];
   const outgoing = (c.related_to || []).map((related) => ({ id: related, direction: 'outgoing' }));
   const incoming = changes
     .filter(
@@ -1044,6 +1049,14 @@ async function gotoChange(proj, changeId) {
     selectProject(match.id);
     $('#project').value = match.id;
     await load();
+  }
+  // Another project selected while this one loaded owns the view now; its
+  // payload can hold a change with the same id.
+  if (state.currentProject !== match.id) return;
+  // Global search hides the view where the load error is painted, so a toast
+  // carries it there.
+  if (state.globalMode && state.loadError) {
+    showToast(`Could not load project "${match.name}": ${state.loadError}`);
   }
   openDetail(changeId);
 }
