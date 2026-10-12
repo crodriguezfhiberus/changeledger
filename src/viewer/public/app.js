@@ -1339,18 +1339,18 @@ const usageInput = (repo) => ({
 // of `changes` has a usage record, which tells an empty section apart as
 // records without attributed usage or no records. The whole project is
 // analysed and the result restricted to `changes` (the visible ones), so each
-// record is attributed as `changeledger analyze` attributes it. A measured
-// change has records, so the per-change lookup of `records` (the count
-// `changeledger analyze <id>` reports) runs only when none is measured.
-export function usageSectionAnalyses(analyzeUsage, repo, changes) {
+// record is attributed as `changeledger analyze` attributes it. `recorded`
+// reads the module's own per-change record count (`usageRecordCounts`, the
+// `records` figure of `changeledger analyze <id>`) once, instead of analysing
+// the project again for each change.
+export function usageSectionAnalyses(analyzeUsage, repo, changes, usageRecordCounts) {
   const input = usageInput(repo);
   const ids = changes.map((c) => String(c.id));
   const analyses = Object.fromEntries(
     ['segment', 'model', 'version'].map((by) => [by, analyzeUsage(input, { ids, by })]),
   );
-  const recorded =
-    analyses.segment.changes.length > 0 ||
-    ids.some((id) => analyzeUsage(input, { id }).changes[0]?.records > 0);
+  const counts = usageRecordCounts(input.usage);
+  const recorded = ids.some((id) => (counts.get(id) ?? 0) > 0);
   return { ...analyses, recorded };
 }
 
@@ -1378,8 +1378,8 @@ export async function metricsViewTemplate(
   let usage;
   if (usageModule) {
     try {
-      const { analyzeUsage } = await usageModule;
-      usage = usageSectionAnalyses(analyzeUsage, repo, changes);
+      const { analyzeUsage, usageRecordCounts } = await usageModule;
+      usage = usageSectionAnalyses(analyzeUsage, repo, changes, usageRecordCounts);
     } catch {
       usage = USAGE_UNAVAILABLE;
     }

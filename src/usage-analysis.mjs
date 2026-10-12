@@ -61,13 +61,36 @@ function chainOrder(group) {
 // `change` and with a string `at`. The rest are skipped here; `check` reports
 // an unreadable record, a wrong `schema` or a missing `change`, but not a
 // missing `at`.
+const isPlaceable = (entry) => {
+  const record = entry?.record;
+  return !(
+    entry?.error ||
+    !isMapping(record) ||
+    record.schema !== 1 ||
+    record.change == null ||
+    typeof record.at !== 'string'
+  );
+};
+
+// How many records of each change the analysis can place, keyed by the
+// change id as a string. It is the `records` figure `analyzeUsage` reports
+// for a change (0 for a change that has none), and a pure count: nothing is
+// attributed.
+export function usageRecordCounts(usage) {
+  const counts = new Map();
+  for (const entry of usage ?? []) {
+    if (!isPlaceable(entry)) continue;
+    const change = String(entry.record.change);
+    counts.set(change, (counts.get(change) ?? 0) + 1);
+  }
+  return counts;
+}
+
 function validRecords(usage) {
   const records = [];
   for (const entry of usage ?? []) {
-    const record = entry?.record;
-    if (entry?.error || !isMapping(record) || record.schema !== 1) continue;
-    if (record.change == null || typeof record.at !== 'string') continue;
-    records.push({ record, text: JSON.stringify(record) });
+    if (!isPlaceable(entry)) continue;
+    records.push({ record: entry.record, text: JSON.stringify(entry.record) });
   }
   // A total order that depends on neither the input order nor the file
   // names: instant, change id, transition chain, then content.
@@ -347,14 +370,13 @@ export function analyzeUsage({ changes = [], usage = [] } = {}, { id, ids, by } 
 
   const records = validRecords(usage);
   const recorders = new Map();
-  const recordCounts = new Map();
+  const recordCounts = usageRecordCounts(usage);
   const failedCounts = new Map();
   for (const entry of records) {
     const recorder = String(entry.record.recorded_by ?? UNKNOWN);
     if (!recorders.has(recorder)) recorders.set(recorder, []);
     recorders.get(recorder).push(entry);
     const change = String(entry.record.change);
-    recordCounts.set(change, (recordCounts.get(change) ?? 0) + 1);
     if (entry.record.error) failedCounts.set(change, (failedCounts.get(change) ?? 0) + 1);
   }
   const unrecorded = unrecordedTransitions(docs, records);

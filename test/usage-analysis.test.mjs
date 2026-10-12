@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { test } from 'node:test';
-import { analyzeUsage, USAGE_GROUP_KEYS } from '../src/usage-analysis.mjs';
+import { analyzeUsage, USAGE_GROUP_KEYS, usageRecordCounts } from '../src/usage-analysis.mjs';
 import {
   changeDoc,
   logLine,
@@ -1162,4 +1162,44 @@ test('140242: id and ids together are refused', () => {
     () => analyzeUsage(usageInput(), { id: BUG, ids: [BUG] }),
     /id and ids cannot be combined/,
   );
+});
+
+// 20261007-172316: the viewer decides its empty message from the exported
+// count, so it must be the count `analyze <id>` prints as `records`.
+test('20261007-172316 CR3: the exported record count is the records of analyze <id> for every change of the ledger', () => {
+  const changes = [changeDoc(A), changeDoc(B), changeDoc(C)];
+  const usage = [
+    // A: two valid records, the second one with data and the first a baseline.
+    usageEntryOf(
+      usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+    ),
+    usageEntryOf(
+      usageRecord({ change: A, at: at(2), from: 'draft', to: 'approved', sessions: [s1(300)] }),
+    ),
+    // B: a record with `error` still counts; a record that is not schema 1 does not.
+    usageEntryOf(
+      usageRecord({ change: B, at: at(3), event: 'created', to: 'draft', error: 'ccusage failed' }),
+    ),
+    usageEntryOf({
+      ...usageRecord({ change: B, at: at(4), from: 'draft', to: 'approved' }),
+      schema: 2,
+    }),
+    // An unreadable file names no change and counts for none.
+    { file: null, name: 'broken.json', change: null, record: null, error: 'unreadable' },
+    // D has records and no change document.
+    usageEntryOf(
+      usageRecord({ change: D, at: at(5), event: 'created', to: 'draft', sessions: [s1(5)] }),
+    ),
+  ];
+  const input = { changes, usage };
+  const counts = usageRecordCounts(usage);
+  assert.deepEqual([...counts].sort(), [
+    [A, 2],
+    [B, 1],
+    [D, 1],
+  ]);
+  for (const id of [A, B, C, D]) {
+    const [analysed] = analyzeUsage(input, { id }).changes;
+    assert.equal(counts.get(id) ?? 0, analysed.records, id);
+  }
 });

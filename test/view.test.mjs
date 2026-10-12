@@ -36,7 +36,7 @@ import { publicDir } from '../src/paths.mjs';
 import { readRegistry, register, registryPath } from '../src/registry.mjs';
 import { loadRepo, loadRepoAsync } from '../src/repo.mjs';
 import { STATE_REF, writeActivation } from '../src/state-store.mjs';
-import { analyzeUsage } from '../src/usage-analysis.mjs';
+import { analyzeUsage, usageRecordCounts } from '../src/usage-analysis.mjs';
 import { encodeProjectPath } from '../src/usage-collector.mjs';
 import { cleanMissingProjects, readLedgerDocument, serialize } from '../src/viewer/domain.mjs';
 import { SHARED_MODULES } from '../src/viewer/server/router.mjs';
@@ -48,7 +48,9 @@ import {
   changeDoc as usageChangeDoc,
   changeText as usageChangeText,
   usageEntryOf,
+  usageRecord,
   usageRecordFileName,
+  usageSession,
 } from './helpers/usage-analysis.mjs';
 import {
   BUG,
@@ -3454,7 +3456,11 @@ async function viewerUsage(root, types) {
   const repo = await repoPayload(root);
   const { isVisible, usageSectionAnalyses } = await import('../src/viewer/public/app.js');
   const visible = repo.changes.filter((c) => isVisible(c, typeFilters(types)));
-  return { repo, visible, usage: usageSectionAnalyses(analyzeUsage, repo, visible) };
+  return {
+    repo,
+    visible,
+    usage: usageSectionAnalyses(analyzeUsage, repo, visible, usageRecordCounts),
+  };
 }
 
 async function renderHost(template) {
@@ -3633,6 +3639,46 @@ test('140242 CR6: with no records among the filtered changes the section says so
   }
 });
 
+test('20261007-172316 CR2: with 400 filtered changes and none measured, the section runs analyzeUsage three times', async () => {
+  const { usageSectionAnalyses } = await import('../src/viewer/public/app.js');
+  const filtered = Array.from(
+    { length: 400 },
+    (_, i) => `20261001-${String(i + 1).padStart(6, '0')}`,
+  );
+  const OTHER = '20261001-999999';
+  const record = (change) =>
+    usageRecord({
+      change,
+      at: '2026-10-01T00:01:00Z',
+      event: 'created',
+      to: 'draft',
+      sessions: [usageSession('s1', { opus: { tokens: 1 } })],
+    });
+  const repoWith = (recordedChange) => ({
+    changes: filtered.map((id) => {
+      const doc = usageChangeDoc(id, {});
+      return { ...doc.frontmatter, stages: doc.stages };
+    }),
+    usage: [usageEntryOf(record(recordedChange))],
+  });
+  const calls = [];
+  const spy = (...args) => {
+    calls.push(args[1]);
+    return analyzeUsage(...args);
+  };
+  const repo = repoWith(OTHER);
+  const noneRecorded = usageSectionAnalyses(spy, repo, repo.changes, usageRecordCounts);
+  assert.equal(noneRecorded.recorded, false);
+  assert.equal(calls.length, 3);
+  assert.deepEqual(calls.map((options) => options.by).sort(), ['model', 'segment', 'version']);
+
+  calls.length = 0;
+  const withRecord = repoWith(filtered[399]);
+  const recorded = usageSectionAnalyses(spy, withRecord, withRecord.changes, usageRecordCounts);
+  assert.equal(recorded.recorded, true);
+  assert.equal(calls.length, 3);
+});
+
 // The viewer's metrics view over the given type filter, with the shared usage
 // module loaded from the repo instead of the browser path.
 async function metricsViewFor(repo, types) {
@@ -3642,7 +3688,7 @@ async function metricsViewFor(repo, types) {
   return renderHost(
     await metricsViewTemplate(repo, visible, {
       loadMetrics: async () => metricsModule,
-      loadUsage: async () => ({ analyzeUsage }),
+      loadUsage: async () => ({ analyzeUsage, usageRecordCounts }),
       now: '2026-10-02T00:00:00Z',
     }),
   );
