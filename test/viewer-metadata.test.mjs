@@ -73,6 +73,7 @@ const { postCleanMissingProjects } = await import('../src/viewer/public/api.js')
 const { serialize } = await import('../src/viewer/domain.mjs');
 const {
   initializeProjects,
+  selectProject,
   setTextFilter,
   state: appState,
 } = await import('../src/viewer/public/app-state.js');
@@ -1284,6 +1285,376 @@ test('20261007-172311 CR2: the startup load without projects still lands on Boar
     assert.ok(!container.classList.contains('hidden'), 'board container is visible');
     assert.equal(container.textContent.trim(), NO_PROJECTS_TEXT);
     assert.ok(fixture.querySelector('#view-board').classList.contains('active'));
+  });
+});
+
+const LOADING_PROJECT_TEXT = 'Loading project…';
+
+const projectPayloadText = (project, change, changeErrors = []) =>
+  JSON.stringify({
+    project_id: project,
+    repository_path: `/repos/${project}`,
+    ...serialize({
+      repoRoot: `/repos/${project}`,
+      config: { language: 'en', statuses: ['draft', 'done'], types: { [change.type]: {} } },
+      changes: [
+        {
+          frontmatter: { status: 'draft', created: '2026-10-12T12:00:00Z', ...change },
+          stages: [],
+          tasks: [],
+          progress: { total: 0, done: 0, blocked: 0 },
+        },
+      ],
+      specs: [],
+      changeErrors,
+    }),
+  });
+
+const alphaPayloadText = () =>
+  projectPayloadText('alpha', {
+    id: '20261012-120000',
+    title: 'Alpha change',
+    type: 'bug',
+    owner: 'ana',
+  });
+
+const addBetaProject = () => {
+  appState.projectsList = [
+    ...appState.projectsList,
+    { id: 'beta', name: 'Beta', path: '/repos/beta', alive: true },
+  ];
+};
+
+const deferred = () => {
+  let resolve;
+  let reject;
+  const promise = new Promise((ok, fail) => {
+    resolve = ok;
+    reject = fail;
+  });
+  return { promise, resolve, reject };
+};
+
+test('20261012-125604 CR1: another project payload is not painted while the selected one loads', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    assert.equal(await load(async () => alphaPayloadText()), true);
+    assert.match(fixture.querySelector('#board').textContent, /Alpha change/);
+    addBetaProject();
+    const pending = deferred();
+    const selected = selectViewerProject('beta', {
+      loadProject: () => load(() => pending.promise),
+    });
+    try {
+      // The search box re-renders through the same render() that activateView calls.
+      setTextFilter('Alpha');
+      for (const view of LOAD_ERROR_VIEWS) {
+        activateView(view, { historyMode: null });
+        await tick();
+        const shown = fixture.querySelector(`#${view}`).textContent;
+        assert.doesNotMatch(shown, /Alpha change/, `${view} hides the previous project`);
+        assert.equal(shown.trim(), LOADING_PROJECT_TEXT, `${view} says the project is loading`);
+      }
+    } finally {
+      setTextFilter('');
+      // Metrics imports a module served only by the real viewer; leave it first.
+      activateView('board', { historyMode: null });
+      pending.resolve(
+        projectPayloadText('beta', {
+          id: '20261012-130000',
+          title: 'Beta change',
+          type: 'feature',
+        }),
+      );
+      assert.equal(await selected, true);
+    }
+    const shown = fixture.querySelector('#board').textContent;
+    assert.match(shown, /Beta change/);
+    assert.doesNotMatch(shown, /Alpha change|Loading project/);
+  });
+});
+
+test('20261012-125604 CR2: a first load in flight does not claim there are no projects', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    const pending = deferred();
+    const loading = load(() => pending.promise);
+    activateView('metrics', { historyMode: null });
+    await tick();
+    const shown = fixture.querySelector('#metrics').textContent;
+    assert.equal(shown.trim(), LOADING_PROJECT_TEXT);
+    assert.doesNotMatch(shown, /No projects registered/);
+    // Once that load fails, its error replaces the loading text.
+    pending.reject(new Error('boom'));
+    assert.equal(await loading, false);
+    const failed = fixture.querySelector('#metrics').textContent;
+    assert.match(failed, /boom/);
+    assert.doesNotMatch(failed, /Loading project/);
+  });
+});
+
+test('20261012-125604 CR3: filters do not offer another project values after a failed load', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    assert.equal(await load(async () => alphaPayloadText()), true);
+    const choices = (selector) =>
+      [...fixture.querySelectorAll(`${selector} [data-choice]`)].map(
+        (input) => input.dataset.choice,
+      );
+    assert.deepEqual(choices('#type-filter'), ['bug']);
+    assert.deepEqual(choices('#owner-filter'), ['ana']);
+    assert.ok(fixture.querySelectorAll('#status-filter [data-status]').length > 0);
+    assert.equal(fixture.querySelector('#lang').textContent, 'en');
+    addBetaProject();
+    assert.equal(
+      await selectViewerProject('beta', { loadProject: () => load(failingLoad) }),
+      false,
+    );
+    for (const selector of ['#type-filter', '#owner-filter']) {
+      fixture.querySelector(`${selector} .filter-menu`).open = true;
+      assert.deepEqual(choices(selector), [], `${selector} offers no alpha values`);
+      assert.doesNotMatch(fixture.querySelector(selector).textContent, /\bbug\b|\bana\b/);
+    }
+    // The same rebuild drops the previous project statuses and language, and the
+    // status menu keeps them out when one of its own toggles re-renders it.
+    assert.equal(fixture.querySelectorAll('#status-filter [data-status]').length, 0);
+    assert.equal(fixture.querySelector('#lang').textContent, '');
+    fixture.querySelector('#status-filter [data-visibility="archived"]').click();
+    try {
+      assert.equal(fixture.querySelectorAll('#status-filter [data-status]').length, 0);
+    } finally {
+      fixture.querySelector('#status-filter [data-visibility="archived"]').click();
+    }
+  });
+});
+
+const filterChoices = (fixture, selector) => {
+  fixture.querySelector(`${selector} .filter-menu`).open = true;
+  return [...fixture.querySelectorAll(`${selector} [data-choice]`)].map(
+    (input) => input.dataset.choice,
+  );
+};
+
+const alphaWithInvalidDocumentText = () =>
+  projectPayloadText(
+    'alpha',
+    { id: '20261012-120000', title: 'Alpha change', type: 'bug', owner: 'ana' },
+    [{ name: 'broken.md', message: 'Alpha broken document' }],
+  );
+
+test('20261012-125604 CR5/CR6: while the selected project loads, filters and warning are not the previous project', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    assert.equal(await load(async () => alphaWithInvalidDocumentText()), true);
+    assert.deepEqual(filterChoices(fixture, '#type-filter'), ['bug']);
+    assert.deepEqual(filterChoices(fixture, '#owner-filter'), ['ana']);
+    assert.match(fixture.querySelector('#change-errors').textContent, /broken\.md/);
+    addBetaProject();
+    const pending = deferred();
+    const selected = selectViewerProject('beta', {
+      loadProject: () => load(() => pending.promise),
+    });
+    try {
+      assert.deepEqual(filterChoices(fixture, '#type-filter'), [], 'type offers no alpha values');
+      assert.deepEqual(filterChoices(fixture, '#owner-filter'), [], 'owner offers no alpha values');
+      assert.equal(
+        fixture.querySelector('#change-errors')?.textContent ?? null,
+        null,
+        'no alpha warning in flight',
+      );
+    } finally {
+      pending.reject(new Error('boom'));
+      assert.equal(await selected, false);
+    }
+    assert.equal(
+      fixture.querySelector('#change-errors')?.textContent ?? null,
+      null,
+      'no alpha warning after failure',
+    );
+  });
+});
+
+test('20261012-125604 CR3/CR6: a failed load selected outside the selector drops the previous project filters and warning', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    assert.equal(await load(async () => alphaWithInvalidDocumentText()), true);
+    assert.match(fixture.querySelector('#change-errors').textContent, /broken\.md/);
+    addBetaProject();
+    // Registry refreshes and route restoration select through app-state, then load.
+    selectProject('beta');
+    assert.equal(await load(failingLoad), false);
+    assert.deepEqual(filterChoices(fixture, '#type-filter'), [], 'type offers no alpha values');
+    assert.deepEqual(filterChoices(fixture, '#owner-filter'), [], 'owner offers no alpha values');
+    assert.equal(
+      fixture.querySelector('#change-errors')?.textContent ?? null,
+      null,
+      'no alpha warning after failure',
+    );
+  });
+});
+
+test('20261012-125604 CR6: a failed reload of the loaded project keeps its own filters and warning', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    assert.equal(await load(async () => alphaWithInvalidDocumentText()), true);
+    assert.equal(await load(failingLoad), false);
+    assert.deepEqual(filterChoices(fixture, '#type-filter'), ['bug']);
+    assert.match(fixture.querySelector('#change-errors').textContent, /broken\.md/);
+  });
+});
+
+const loadAlphaWithInvalidDocument = async (fixture) => {
+  assert.equal(await load(async () => alphaWithInvalidDocumentText()), true);
+  assert.deepEqual(filterChoices(fixture, '#type-filter'), ['bug']);
+  assert.match(fixture.querySelector('#change-errors').textContent, /broken\.md/);
+  addBetaProject();
+};
+
+const assertNoAlphaShell = (fixture, when) => {
+  assert.deepEqual(
+    filterChoices(fixture, '#type-filter'),
+    [],
+    `type offers no alpha values ${when}`,
+  );
+  assert.deepEqual(
+    filterChoices(fixture, '#owner-filter'),
+    [],
+    `owner offers no alpha values ${when}`,
+  );
+  assert.equal(
+    fixture.querySelector('#change-errors')?.textContent ?? null,
+    null,
+    `no alpha warning ${when}`,
+  );
+};
+
+const failedRepoResponse = () => ({
+  ok: false,
+  status: 500,
+  json: async () => ({ error: 'boom' }),
+});
+
+test('20261012-125604 CR5/CR6: route restoration in flight shows no previous project filters or warning', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const pending = deferred();
+    const restored = restoreLedgerRouteSelection(
+      { project: 'beta', category: 'specs', doc: null },
+      {
+        root: fixture.querySelector('#ledger'),
+        ensureProject: async () => ({ ok: await load(() => pending.promise) }),
+      },
+    );
+    try {
+      assertNoAlphaShell(fixture, 'while beta loads');
+    } finally {
+      pending.reject(new Error('boom'));
+      assert.equal(await restored, false);
+    }
+    assertNoAlphaShell(fixture, 'after beta fails');
+  });
+});
+
+test('20261012-125604 CR5/CR6: a global search hit in flight shows no previous project filters or warning', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const pending = deferred();
+    const previous = { globalMode: appState.globalMode, text: appState.filters.text };
+    await withMockedFetch(
+      async (url) => {
+        if (String(url).startsWith('/api/search')) {
+          return {
+            json: async () => [
+              {
+                project: { id: 'beta', name: 'Beta' },
+                matches: [
+                  { id: '20261012-130000', type: 'feature', title: 'Beta hit', status: 'draft' },
+                ],
+              },
+            ],
+          };
+        }
+        if (String(url).startsWith('/api/repo?project=beta')) return pending.promise;
+        throw new Error(`unexpected request ${url}`);
+      },
+      async () => {
+        try {
+          appState.globalMode = true;
+          appState.filters.text = 'Beta';
+          syncViewerShell();
+          await tick();
+          const opened = fixture.querySelector('#global .search-hit').onclick();
+          await tick();
+          try {
+            assertNoAlphaShell(fixture, 'while beta loads');
+          } finally {
+            pending.resolve(failedRepoResponse());
+            await opened;
+          }
+          assertNoAlphaShell(fixture, 'after beta fails');
+        } finally {
+          appState.globalMode = previous.globalMode;
+          appState.filters.text = previous.text;
+        }
+      },
+    );
+  });
+});
+
+test('20261012-125604 CR5/CR6: a registry refresh that selects another project shows no previous project filters or warning', async () => {
+  await withFailedLoadFixture(async (fixture, tick) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const pending = deferred();
+    const root = document.createElement('form');
+    root.innerHTML = '<button>Clean</button><p class="project-clean-error"></p>';
+    await withMockedFetch(
+      async (url) => {
+        if (url === '/api/projects') {
+          return {
+            ok: true,
+            json: async () => ({
+              projects: [{ id: 'beta', name: 'Beta', path: '/repos/beta', alive: true }],
+              current: null,
+              localOnly: false,
+            }),
+          };
+        }
+        throw new Error(`unexpected request ${url}`);
+      },
+      async () => {
+        const cleaned = cleanMissingProjectsFromView(root, ['alpha'], {
+          confirm: async () => true,
+          request: async () => ({
+            ok: true,
+            json: async () => ({ removedIds: ['alpha'], removed: 1, skipped: 0 }),
+          }),
+          reload: () => load(() => pending.promise),
+        });
+        await tick();
+        assert.equal(appState.currentProject, 'beta');
+        try {
+          assertNoAlphaShell(fixture, 'while beta loads');
+        } finally {
+          pending.reject(new Error('boom'));
+          await cleaned;
+        }
+        assertNoAlphaShell(fixture, 'after beta fails');
+      },
+    );
+  });
+});
+
+test('20261012-125604 CR5/CR6: switching back to the project whose payload is held shows its filters and warning', async () => {
+  await withFailedLoadFixture(async (fixture) => {
+    await loadAlphaWithInvalidDocument(fixture);
+    const beta = deferred();
+    const alpha = deferred();
+    const toBeta = selectViewerProject('beta', { loadProject: () => load(() => beta.promise) });
+    assertNoAlphaShell(fixture, 'while beta loads');
+    const toAlpha = selectViewerProject('alpha', { loadProject: () => load(() => alpha.promise) });
+    try {
+      assert.deepEqual(filterChoices(fixture, '#type-filter'), ['bug']);
+      assert.deepEqual(filterChoices(fixture, '#owner-filter'), ['ana']);
+      assert.match(fixture.querySelector('#change-errors')?.textContent ?? '', /broken\.md/);
+    } finally {
+      beta.reject(new Error('boom'));
+      alpha.reject(new Error('boom'));
+      await Promise.all([toBeta, toAlpha]);
+    }
   });
 });
 
