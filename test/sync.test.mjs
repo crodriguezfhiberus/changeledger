@@ -670,3 +670,78 @@ test('20261002-161641 CR3: a sync whose merge would drop an unknown entry is ref
   assert.equal(refOid(a, STATE_REF), localTip, 'the local ref must not move');
   assert.equal(refOid(remote, STATE_REF), dropped, 'nothing was published');
 });
+
+// --- 20261012-125611: sync does not adopt a remote minimum above the CLI -----
+
+const belowMinimum = (required) =>
+  `ChangeLedger CLI ${PACKAGE_VERSION} is below this repository's minimum ${required}; update the global installation.`;
+
+const minConfigText = (min) =>
+  `project_id: fixture01\nschema_version: 6\nmin_cli_version: ${min}\n`;
+
+// Two activated clones of one remote whose shared state declares a minimum the
+// installed CLI satisfies (0.0.1); `b` then publishes a revision raising it to
+// `min`. The publish is raw git: once `b`'s own config declares a minimum above
+// the CLI, the `preAction` guard stops `b`'s `changeledger sync`.
+function raisedMinimumFixture(t, min) {
+  const fixture = syncFixture({
+    files: {
+      ...listableStateFiles(),
+      '.changeledger-state/config.yml': minConfigText('0.0.1'),
+    },
+  });
+  for (const dir of [fixture.remote, fixture.a, path.dirname(fixture.b)]) {
+    t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  }
+  writeDocument(fixture.b, 'config.yml', minConfigText(min));
+  git(fixture.b, ['push', '-q', 'origin', STATE_REF]);
+  return fixture;
+}
+
+// Commit objects in `root` whose parents are exactly `parents`, reachable or
+// not: a merge commit written and then left unreferenced still counts.
+function commitsWithParents(root, parents) {
+  return git(root, ['cat-file', '--batch-all-objects', '--batch-check=%(objectname) %(objecttype)'])
+    .split('\n')
+    .filter((line) => line.endsWith(' commit'))
+    .map((line) => line.split(' ')[0])
+    .filter((oid) => git(root, ['show', '-s', '--format=%P', oid]) === parents.join(' '));
+}
+
+test('20261012-125611 CR1: a fast-forward does not adopt a remote minimum above the CLI', (t) => {
+  const { remote, a } = raisedMinimumFixture(t, '99.0.0');
+  const localBefore = refOid(a, STATE_REF);
+  const remoteBefore = refOid(remote, STATE_REF);
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, `sync exited 0 over a higher remote minimum: ${out}`);
+  assert.ok(err.includes(belowMinimum('99.0.0')), err);
+  assert.equal(refOid(a, STATE_REF), localBefore, 'the local state ref must keep its oid');
+  assert.equal(refOid(remote, STATE_REF), remoteBefore, 'the remote must not change');
+});
+
+test('20261012-125611 CR2: a reconciliation does not adopt a remote minimum above the CLI', (t) => {
+  const { remote, a } = raisedMinimumFixture(t, '99.0.0');
+  const localTip = addChange(a, '20261012-000001');
+  const remoteBefore = refOid(remote, STATE_REF);
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.notEqual(code, 0, `sync exited 0 over a higher remote minimum: ${out}`);
+  assert.ok(err.includes(belowMinimum('99.0.0')), err);
+  assert.equal(refOid(a, STATE_REF), localTip, 'the local state ref must keep its oid');
+  assert.deepEqual(commitsWithParents(a, [localTip, remoteBefore]), [], 'no merge commit');
+  assert.equal(refOid(remote, STATE_REF), remoteBefore, 'nothing was published');
+});
+
+test('20261012-125611 CR3: a remote minimum the CLI satisfies fast-forwards as before', (t) => {
+  const { remote, a } = raisedMinimumFixture(t, '0.1.0');
+  const published = refOid(remote, STATE_REF);
+  assert.notEqual(refOid(a, STATE_REF), published, 'the remote really is ahead');
+
+  const { code, out, err } = cli(a, 'sync');
+
+  assert.equal(code, 0, `${out}${err}`);
+  assert.equal(refOid(a, STATE_REF), published, 'the local ref advances to the remote revision');
+});
