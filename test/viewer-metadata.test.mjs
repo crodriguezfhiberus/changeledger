@@ -1035,6 +1035,58 @@ test('20261007-135148 CR2: the projects view still shows its own empty state wit
   }
 });
 
+const NO_PROJECTS_TEXT = 'No projects registered. Run changeledger init in a repo.';
+
+async function withNoProjectsViewer(view, run) {
+  const fixture = viewerShell();
+  document.body.append(fixture);
+  const previous = {
+    repo: appState.repo,
+    project: appState.currentProject,
+    view: appState.currentView,
+    globalMode: appState.globalMode,
+  };
+  appState.repo = null;
+  appState.currentProject = null;
+  appState.currentView = view;
+  appState.globalMode = false;
+  try {
+    await run(fixture);
+  } finally {
+    fixture.remove();
+    appState.repo = previous.repo;
+    appState.currentProject = previous.project;
+    appState.currentView = previous.view;
+    appState.globalMode = previous.globalMode;
+  }
+}
+
+test('20261007-172311 CR1: the periodic load without projects keeps the chosen view', async () => {
+  await withNoProjectsViewer('metrics', async (fixture) => {
+    await load(undefined, undefined, { polling: true });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    assert.equal(appState.currentView, 'metrics');
+    const container = fixture.querySelector('#metrics');
+    assert.ok(!container.classList.contains('hidden'), 'metrics container stays visible');
+    assert.equal(container.textContent.trim(), NO_PROJECTS_TEXT);
+    assert.ok(fixture.querySelector('#view-metrics').classList.contains('active'));
+    assert.ok(fixture.querySelector('#board').classList.contains('hidden'));
+  });
+});
+
+test('20261007-172311 CR2: the startup load without projects still lands on Board with the message', async () => {
+  await withNoProjectsViewer('metrics', async (fixture) => {
+    await load();
+
+    assert.equal(appState.currentView, 'board');
+    const container = fixture.querySelector('#board');
+    assert.ok(!container.classList.contains('hidden'), 'board container is visible');
+    assert.equal(container.textContent.trim(), NO_PROJECTS_TEXT);
+    assert.ok(fixture.querySelector('#view-board').classList.contains('active'));
+  });
+});
+
 test('175732 CR1: a payload in id/type/status does not create active HTML in a card', () => {
   const host = parse(card({ ...baseChange(), id: XSS, type: XSS, status: XSS }));
   assert.equal(host.querySelector('img'), null, 'no injected <img>');

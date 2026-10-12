@@ -169,7 +169,7 @@ async function loadProjects(initialRoute = { kind: 'absent' }) {
   }
 }
 
-export function load(requestRepo = getRepo, applyRepo = applyLoadedRepo) {
+export function load(requestRepo = getRepo, applyRepo = applyLoadedRepo, { polling = false } = {}) {
   const revision = ++repoRequestRevision;
   const project = state.currentProject;
   const target = captureProjectTarget(project);
@@ -189,6 +189,10 @@ export function load(requestRepo = getRepo, applyRepo = applyLoadedRepo) {
       if (state.currentView === 'projects') {
         syncViewerShell();
         return true;
+      }
+      if (polling) {
+        syncViewerShell();
+        return false;
       }
       showNoProjects();
       return false;
@@ -2499,7 +2503,7 @@ function bootstrap() {
 
   window.onpopstate = (event) => void restoreViewerLocation(event);
   void loadProjects(initialRoute);
-  setInterval(load, 5000);
+  setInterval(() => load(getRepo, applyLoadedRepo, { polling: true }), 5000);
 
   // The topbar wraps to multiple rows at content-dependent widths, so the
   // CSS fallback constant cannot bound the projects panels; track the real
