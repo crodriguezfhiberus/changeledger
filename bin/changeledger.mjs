@@ -52,11 +52,27 @@ import {
 } from '../src/lifecycle.mjs';
 import { nowUtc } from '../src/paths.mjs';
 import { RELEASE_IMPACTS } from '../src/release.mjs';
-import { CAS_CONFLICT_MESSAGE, LedgerConflictError } from '../src/state-store.mjs';
+import {
+  CAS_CONFLICT_MESSAGE,
+  LedgerConflictError,
+  setUnknownCollectionsListener,
+  unknownCollectionsMessage,
+} from '../src/state-store.mjs';
 import { USAGE_GROUP_KEYS } from '../src/usage-analysis.mjs';
 import { repoCliVersionError } from '../src/version-guard.mjs';
 
 const { version } = createRequire(import.meta.url)('../package.json');
+
+// A state ref holding collections this CLI does not declare is read without
+// them (20261002-161641); one command may read the tree several times, so the
+// warning is written on the first read only. Installed before the first read
+// of this module, the configured-domains lookup below.
+let unknownCollectionsWarned = false;
+setUnknownCollectionsListener((collections) => {
+  if (unknownCollectionsWarned) return;
+  unknownCollectionsWarned = true;
+  console.error(`warning: ${unknownCollectionsMessage(collections, version)}`);
+});
 
 function configuredDomains(cwd = process.cwd()) {
   try {

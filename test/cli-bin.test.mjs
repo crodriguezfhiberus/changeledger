@@ -1751,3 +1751,120 @@ test('CR2: two concurrent CLI writes — exactly one succeeds, the loser gets th
   const noteBCount = (listed.match(/note B/g) ?? []).length;
   assert.equal(noteACount + noteBCount, 1);
 });
+
+// --- 20261002-161641: a state ref holding collections this CLI does not know --
+
+// Like `runIn`, but stderr is captured on success too: the warning under test
+// is written by commands that exit 0.
+function spawnIn(cwd, env, ...args) {
+  const result = spawnSync('node', [bin, ...args], { cwd, env, encoding: 'utf8' });
+  return { code: result.status ?? 1, out: result.stdout ?? '', err: result.stderr ?? '' };
+}
+
+const unknownWarning = (collections) =>
+  `warning: the state ref holds collections ChangeLedger ${pkgVersion} does not know (${collections}); update the installation to use them`;
+
+function occurrences(text, needle) {
+  return text.split(needle).length - 1;
+}
+
+// `approvedGitRepo`'s ledger published to an activated state ref, with `extra`
+// state paths (full paths) added to the same tree.
+function activatedFutureRepo(extra = { '.changeledger-state/future/a.json': '{"later":true}\n' }) {
+  const { root, env, id, changeFile, configFile } = approvedGitRepo();
+  const tree = buildTree(root, {
+    '.changeledger-state/manifest.yml': 'format_version: 1\nproject_id: demo\n',
+    '.changeledger-state/config.yml': fs.readFileSync(configFile, 'utf8'),
+    [`.changeledger-state/changes/${path.basename(changeFile)}`]: fs.readFileSync(
+      changeFile,
+      'utf8',
+    ),
+    ...extra,
+  });
+  const revision = commitTree(root, tree, { message: 'chore: state' });
+  updateRef(root, STATE_REF, revision);
+  writeActivation(root, { stateRef: STATE_REF });
+  return { root, env, id, revision };
+}
+
+test('20261002-161641 CR1: list, context and status work over an unknown collection and warn once each', () => {
+  const { root, env, id } = activatedFutureRepo();
+  for (const args of [['list'], ['context'], ['status', id, 'in-progress']]) {
+    const result = spawnIn(root, env, ...args);
+    const label = args.join(' ');
+    assert.equal(result.code, 0, `${label}: ${result.err}`);
+    assert.equal(occurrences(result.err, unknownWarning('future')), 1, `${label}: ${result.err}`);
+    assert.equal(occurrences(result.err, 'does not know'), 1, `${label}: ${result.err}`);
+  }
+  const listed = JSON.parse(spawnIn(root, env, 'list', '--json').out);
+  assert.deepEqual(
+    listed.map((change) => [change.id, change.status]),
+    [[id, 'in-progress']],
+  );
+  const context = spawnIn(root, env, 'context');
+  assert.match(context.out, /^===== CHANGELEDGER CONTEXT BEGIN/);
+  assert.match(context.out, /CHANGELEDGER CONTEXT END/);
+});
+
+test('20261002-161641 CR1: the warning names every unknown collection in one line', () => {
+  const { root, env } = activatedFutureRepo({
+    '.changeledger-state/future/a.json': '{}\n',
+    '.changeledger-state/later/b.yml': 'x: 1\n',
+  });
+  const result = spawnIn(root, env, 'list');
+  assert.equal(result.code, 0, result.err);
+  assert.equal(occurrences(result.err, unknownWarning('future, later')), 1, result.err);
+});
+
+test('20261002-161641 CR1: a state ref without unknown collections prints no warning', () => {
+  const { root, env } = activatedFutureRepo({});
+  const result = spawnIn(root, env, 'list');
+  assert.equal(result.code, 0, result.err);
+  assert.equal(result.err, '');
+});
+
+test('20261002-161641 CR2: the transition commit keeps the unknown entry with the same blob', () => {
+  const { root, env, id, revision } = activatedFutureRepo();
+  const result = spawnIn(root, env, 'status', id, 'in-progress');
+  assert.equal(result.code, 0, result.err);
+  const tip = fixtureGit(root, ['rev-parse', STATE_REF]).trim();
+  assert.notEqual(tip, revision);
+  const blob = (rev) =>
+    fixtureGit(root, ['rev-parse', `${rev}:.changeledger-state/future/a.json`]).trim();
+  assert.equal(blob(tip), blob(revision));
+});
+
+test('20261002-161641 CR4: list refuses each malformed state path, naming it', () => {
+  for (const malformed of [
+    '.changeledger-state/future/sub/a.json',
+    '.changeledger-state/Future/a.json',
+    '.changeledger-state/loose.yml',
+    'other/a.json',
+  ]) {
+    const { root, env } = activatedFutureRepo({ [malformed]: 'x\n' });
+    const result = spawnIn(root, env, 'list');
+    assert.notEqual(result.code, 0, malformed);
+    assert.ok(
+      result.err.includes(`invalid state path: ${malformed}`),
+      `${malformed}: ${result.err}`,
+    );
+  }
+});
+
+test('20261002-161641 CR5: check passes over an unknown collection and shows the warning', () => {
+  const { root, env, id } = activatedFutureRepo();
+  const result = spawnIn(root, env, 'check');
+  assert.equal(result.code, 0, `${result.out}${result.err}`);
+  assert.equal(occurrences(result.err, unknownWarning('future')), 1, result.err);
+  assert.ok(
+    result.err.includes(`  warn   .changeledger-state: ${unknownWarning('future').slice(9)}`),
+    result.err,
+  );
+  assert.match(result.out, /0 error\(s\), 1 warning\(s\)/);
+
+  // `check <id>` keeps the bin's stderr line and leaves it out of the report.
+  const single = spawnIn(root, env, 'check', id);
+  assert.equal(single.code, 0, `${single.out}${single.err}`);
+  assert.equal(occurrences(single.err, 'does not know'), 1, single.err);
+  assert.equal(single.out, `✓ change ${id} valid\n`);
+});

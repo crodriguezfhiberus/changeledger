@@ -235,6 +235,7 @@ function activatedFixture({
   stateConfig = 'project_id: demo\nlanguage: en\n',
   seedStateRef = true,
   subdir = '',
+  extraState = {},
 } = {}) {
   const gitRoot = initStateRepo();
   const root = subdir ? path.join(gitRoot, subdir) : gitRoot;
@@ -254,6 +255,7 @@ function activatedFixture({
       '.changeledger-state/manifest.yml': 'format_version: 1\nproject_id: demo\n',
       '.changeledger-state/config.yml': stateConfig,
       '.changeledger-state/changes/only-ref.md': changeDoc('only-ref', 'Only ref'),
+      ...extraState,
     });
     revision = commitTree(gitRoot, tree, { message: 'chore: state' });
     updateRef(gitRoot, STATE_REF, revision);
@@ -612,4 +614,25 @@ test('20261002-133728 CR10 (legacy): a record that cannot be read stays an entry
     const entry = repo.usage.find((e) => e.name === unreadable);
     assert.deepEqual([entry.record, entry.error], [null, 'cannot be read']);
   }
+});
+
+// --- 20261002-161641: an unknown collection in the activated snapshot -------
+
+test('20261002-161641 CR1: an activated load skips an unknown collection and reports it on state', async () => {
+  const { root, revision } = activatedFixture({
+    extraState: { '.changeledger-state/future/a.json': '{"later":true}\n' },
+  });
+  for (const repo of [loadRepo(root), await loadRepoAsync(root)]) {
+    assert.equal(repo.state.revision, revision);
+    assert.deepEqual(repo.state.unknownCollections, ['future']);
+    assert.deepEqual(
+      repo.changes.map((c) => c.frontmatter.id),
+      ['only-ref'],
+    );
+  }
+});
+
+test('20261002-161641 CR1: an activated load without unknown collections reports none', () => {
+  const { root } = activatedFixture();
+  assert.deepEqual(loadRepo(root).state.unknownCollections, []);
 });
