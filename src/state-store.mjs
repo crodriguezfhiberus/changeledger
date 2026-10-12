@@ -36,7 +36,9 @@ const STATE_COLLECTION_EXTENSIONS = new Map([
 ]);
 // The append-only collection: `mutateState` refuses a candidate that drops or
 // changes the bytes of a usage record of its parent, even through an explicit
-// `stage.remove`. (`sync`'s fast-forward and merge do not run this check.)
+// `stage.remove`; `advanceStateRef` and `commitMergedState` refuse a tree that
+// drops or changes the bytes of a usage record of the local tip
+// (`assertLocalStateSurvives`).
 const USAGE_PREFIX = `${STATE_ROOT}/usage/`;
 const ACTIVATION_AUTHORITY_PATH = 'authority.yml';
 const LEDGER_DIR_NAME = '.changeledger';
@@ -506,18 +508,44 @@ export function mutateState(
   return snapshot;
 }
 
+// The survival check both of `sync`'s adoption paths share (20261012-141809):
+// walks the paths of the local tip's tree in sorted order and throws on the
+// first one that `adoptedOids` (path -> blob oid of the tree about to be
+// adopted) lacks, or that is a usage record whose blob oid differs. `subject`
+// names that tree in the message. Ancestry alone does not establish survival:
+// a descendant made with raw git can delete a path its ancestor held.
+function assertLocalStateSurvives(repoRoot, localRevision, adoptedOids, subject, run) {
+  const local = treeEntries(repoRoot, localRevision, run).sort((one, other) =>
+    one.path < other.path ? -1 : one.path > other.path ? 1 : 0,
+  );
+  for (const { path: name, oid } of local) {
+    const verb = !adoptedOids.has(name)
+      ? 'drops'
+      : name.startsWith(USAGE_PREFIX) && adoptedOids.get(name) !== oid
+        ? 'rewrites usage record'
+        : null;
+    if (verb !== null) {
+      throw new Error(
+        `${subject} ${verb} "${name}", present in the local state; sync adopted nothing`,
+      );
+    }
+  }
+}
+
 // Fast-forwards the state ref from `expectedRevision` onto `revision` — the
 // move `sync` needs when another clone's journal already contains this one's.
 // No commit is created: the local journal adopts a history it is fully
-// contained in. Three guards, all before any ref moves, keep that claim true
-// instead of trusting the caller's classification:
+// contained in. Four guards, in this order and all before the ref moves, keep
+// that claim true instead of trusting the caller's classification:
 //
 // - `revision` must be a commit OBJECT (never an annotated tag peeled to one);
 // - `expectedRevision` must be an ancestor of it, so a "fast-forward" that
 //   would actually drop local journal entries is refused rather than performed;
 // - its tree must be a valid state layout, read in full — a ref fetched from a
 //   remote is untrusted input, and adopting a foreign or non-UTF-8 tree would
-//   only fail later, on the next read, with the ledger already moved.
+//   only fail later, on the next read, with the ledger already moved;
+// - every path of `expectedRevision`'s tree must be in it, and every usage
+//   record with the same blob (`assertLocalStateSurvives`).
 export function advanceStateRef(repoRoot, { expectedRevision, revision } = {}, run = capturedRun) {
   if (typeof expectedRevision !== 'string' || expectedRevision === '') {
     throw new Error('advanceStateRef requires expectedRevision');
@@ -532,6 +560,13 @@ export function advanceStateRef(repoRoot, { expectedRevision, revision } = {}, r
     );
   }
   const snapshot = readSnapshot(repoRoot, { revision }, run);
+  assertLocalStateSurvives(
+    repoRoot,
+    expectedRevision,
+    new Map(treeEntries(repoRoot, revision, run).map((entry) => [entry.path, entry.oid])),
+    `state revision ${revision}`,
+    run,
+  );
   casUpdateStateRef(repoRoot, revision, expectedRevision, run);
   return snapshot;
 }
@@ -564,7 +599,10 @@ export function seedStateRef(repoRoot, { revision } = {}, run = capturedRun) {
 // from a remote's objects is untrusted input. An entry of an unknown collection
 // that either parent holds must be among `entries` by path (20261002-161641):
 // this CLI has no rule to judge whether dropping it is legitimate, so it
-// refuses the drop. The check is survival by path.
+// refuses the drop with a diagnostic of its own. Then every path of
+// `expectedRevision`'s tree must be among `entries`, and every usage record
+// with the same blob (`assertLocalStateSurvives`, 20261012-141809). Both run
+// before the merge commit is created.
 export function commitMergedState(
   repoRoot,
   { expectedRevision, otherRevision, entries, message } = {},
@@ -585,14 +623,14 @@ export function commitMergedState(
   assertCommitObject(repoRoot, expectedRevision, run);
   assertCommitObject(repoRoot, otherRevision, run);
 
-  const names = new Set();
+  const names = new Map();
   for (const entry of entries) {
     assertRegularBlobEntry(entry.mode, entry.path, entry.type);
     if (classifyStatePath(entry.path) === 'malformed') {
       throw new Error(`invalid state path: ${entry.path}`);
     }
     if (names.has(entry.path)) throw new Error(`duplicate state path: ${entry.path}`);
-    names.add(entry.path);
+    names.set(entry.path, entry.oid);
   }
   for (const required of [MANIFEST, CONFIG]) {
     if (!names.has(required)) throw new Error(`merged state is missing ${required}`);
@@ -606,6 +644,7 @@ export function commitMergedState(
       }
     }
   }
+  assertLocalStateSurvives(repoRoot, expectedRevision, names, 'merged state', run);
 
   const tree = buildTreeFromEntries(repoRoot, entries);
   const commit = commitTree(

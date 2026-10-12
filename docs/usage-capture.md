@@ -126,9 +126,10 @@ shared state ref when activated, their own worktree otherwise. ChangeLedger has
 no command that edits or deletes a record; `cutover` and `import --from <ref>` carry
 them under the same name (`import` identifies a record by its file name, so the
 same name with different bytes is a conflict), and a state-ref mutation that
-would drop or rewrite one is refused, even through an explicit removal. `sync`'s
-reconciliation and fast-forward do not run that check: they keep whatever
-the two journals hold. Records from the first version of the collector, kept in
+would drop or rewrite one is refused, even through an explicit removal. `sync`
+refuses a fast-forward or a reconciliation whose tree drops or rewrites a record
+of the local tip, and adopts nothing; publishing a local tip that is ahead of the
+remote does not run that check. Records from the first version of the collector, kept in
 `<git-common-dir>/changeledger/usage/`, are neither read nor migrated.
 
 A ledger outside a git repository has no worktree list to match sessions
