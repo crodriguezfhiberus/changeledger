@@ -1655,6 +1655,16 @@ const DELEGATION_OBLIGATIONS = [
       /\bnarrow\w*\b[^.;]{0,60}\b(observed|incident|measured)\b|\b(observed|incident|measured)\b[^.;]{0,60}\bnarrow\w*/i,
     ],
   ],
+  [
+    'the examples of universal quantifiers name never and only (20261007-172322 CR1)',
+    'implement.md',
+    'implement',
+    [
+      // Each example is its own half, held to the sentence that names quantifiers.
+      /\bquantif\w+[^.;]{0,80}\bnever\b|\bnever\b[^.;]{0,80}\bquantif\w+/i,
+      /\bquantif\w+[^.;]{0,80}\bonly\b|\bonly\b[^.;]{0,80}\bquantif\w+/i,
+    ],
+  ],
   // 20261007-135159 CR2/CR3 — what a prose correction does, and what the report
   // carries. Rows here rather than in the curated `CONCEPT_GUARDS`: the bullet's own
   // guard lives in this table, and the obligations ride the same bullet.
