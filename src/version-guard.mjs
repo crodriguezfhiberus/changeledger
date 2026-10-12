@@ -5,6 +5,8 @@
 
 import { compareCliVersions, isValidCliVersion } from './cli-version.mjs';
 import { loadEffectiveConfig } from './config.mjs';
+import { readStateConfigText } from './state-store.mjs';
+import { parseYaml } from './yaml.mjs';
 
 // The key only exists from schema 6 on; older schemas keep their behavior.
 const GUARDED_SCHEMA = 6;
@@ -41,8 +43,8 @@ export function cliVersionError(config, installedVersion) {
 // the worktree marker). An unreadable effective config declares no minimum to
 // compare, so the guard stands aside: commands that actually need that config
 // still fail when they load it themselves. `activate` can still reach a broken
-// activation to repair it, and compares the minimum of the revision it adopts
-// itself (`assertCliAdmitted` in src/commands/activate.mjs).
+// activation to repair it; it and `sync` compare the minimum of the revision
+// they adopt themselves (`assertCliAdmitted` below).
 export function repoCliVersionError(repoRoot, changeledgerDir, installedVersion) {
   let config;
   try {
@@ -51,4 +53,16 @@ export function repoCliVersionError(repoRoot, changeledgerDir, installedVersion)
     return null;
   }
   return cliVersionError(config, installedVersion);
+}
+
+// Throws the guard's diagnostic when `installedVersion` may not work on the
+// state `revision` declares. The `preAction` guard compares the effective config
+// of the checkout as it is; a command about to make another revision
+// authoritative (`activate` seeding or activating it, `sync` adopting a remote
+// one) repeats the comparison on that revision before writing the ref that
+// adopts it.
+export function assertCliAdmitted(repoRoot, revision, installedVersion, run) {
+  const config = parseYaml(readStateConfigText(repoRoot, { revision }, run));
+  const message = cliVersionError(config, installedVersion);
+  if (message) throw new Error(message);
 }

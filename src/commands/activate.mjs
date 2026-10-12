@@ -15,25 +15,19 @@ import { capturedRun } from '../git.mjs';
 import {
   ACTIVATION_REF,
   optionalRefOid,
-  readStateConfigText,
   readStateRef,
   STATE_REF,
   seedStateRef,
   writeActivation,
 } from '../state-store.mjs';
-import { cliVersionError } from '../version-guard.mjs';
-import { parseYaml } from '../yaml.mjs';
+import { assertCliAdmitted } from '../version-guard.mjs';
 import { resolveRemote } from './sync.mjs';
 
 // The `preAction` guard compares against the worktree marker while the clone is
 // not activated, and stands aside when the activation is broken. Neither is the
-// config of the revision this command is about to make authoritative, so the
-// comparison is repeated here, on that revision, before any ref is written.
-function assertCliAdmitted(repoRoot, revision, installedVersion, run) {
-  const config = parseYaml(readStateConfigText(repoRoot, { revision }, run));
-  const message = cliVersionError(config, installedVersion);
-  if (message) throw new Error(message);
-}
+// config of the revision this command is about to make authoritative, so
+// `assertCliAdmitted` repeats the comparison on that revision before any ref is
+// written.
 
 export function activate(
   cwd = process.cwd(),

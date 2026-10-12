@@ -20,6 +20,7 @@
 
 import path from 'node:path';
 import { findChangeledgerDir } from '../config.mjs';
+import { VERSION } from '../framing.mjs';
 import { capturedRun, isAncestor } from '../git.mjs';
 import { treeEntries } from '../git-batch.mjs';
 import {
@@ -31,6 +32,7 @@ import {
   STATE_REF,
   STATE_ROOT,
 } from '../state-store.mjs';
+import { assertCliAdmitted } from '../version-guard.mjs';
 
 // The branch name the state ref carries inside `refs/heads/`, and therefore the
 // suffix of its remote-tracking copy under `refs/remotes/<remote>/`.
@@ -258,6 +260,7 @@ export function sync(
   cwd = process.cwd(),
   output = console,
   run = capturedRun,
+  installedVersion = VERSION,
 ) {
   const changeledgerDir = findChangeledgerDir(cwd);
   if (!changeledgerDir) {
@@ -307,6 +310,12 @@ export function sync(
   if (relation === 'identical') {
     output.log(`Already in sync with "${remote}" at ${local}.`);
     return 0;
+  }
+  // The `preAction` guard compared the local config. A fast-forward or a
+  // reconciliation makes the remote revision part of the ledger, so its own
+  // minimum is compared before the local ref moves or a merge commit exists.
+  if (relation === 'behind' || relation === 'diverged') {
+    assertCliAdmitted(repoRoot, tracked, installedVersion, run);
   }
   if (relation === 'behind') {
     advanceStateRef(repoRoot, { expectedRevision: local, revision: tracked }, run);
