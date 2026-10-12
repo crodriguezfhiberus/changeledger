@@ -352,3 +352,58 @@ test('20261012-125617 CR3 through the CLI: analyze --json attributes nothing to 
   assert.equal(change.records, 1, out);
   assert.deepEqual(change.segments, [], out);
 });
+
+// 20261012-141915: analyze announces the records it cannot place.
+const SKIPPED_LINE =
+  'skipped: 1 usage record(s) in the ledger cannot be placed; changeledger check reports why';
+const unplaceableLedger = (t, badAt) =>
+  ledger(t, {
+    changes: { [A]: { title: 'Alpha' } },
+    records: [
+      usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+    ],
+    rawRecords: [
+      [
+        `${A}--20261001T000200Z-0a1b2c3d.json`,
+        usageRecord({ change: A, at: badAt, from: 'draft', to: 'approved', sessions: [s1(900)] }),
+      ],
+    ],
+  });
+
+test('20261012-141915 CR1 through the CLI: text and --json announce the record that cannot be placed', (t) => {
+  const analyze = unplaceableLedger(t, 123);
+  const text = analyze(A);
+  assert.equal(text.code, 0, text.err);
+  assert.ok(text.out.split('\n').includes(SKIPPED_LINE), text.out);
+  const json = analyze(A, '--json');
+  assert.equal(json.code, 0, json.err);
+  assert.ok(JSON.parse(json.out).hints.includes(SKIPPED_LINE), json.out);
+});
+
+test('20261012-141915 CR2 through the CLI: an at without the check form closes no segment and is announced', (t) => {
+  const analyze = unplaceableLedger(t, 'ayer');
+  const { code, out, err } = analyze(A, '--json');
+  assert.equal(code, 0, err);
+  const parsed = JSON.parse(out);
+  const [change] = parsed.changes;
+  assert.equal(change.records, 1, out);
+  assert.deepEqual(change.segments, [], out);
+  assert.ok(parsed.hints.includes(SKIPPED_LINE), out);
+});
+
+test('20261012-141915 CR3 through the CLI: a ledger whose records all place has no skipped hint', (t) => {
+  const analyze = ledger(t, {
+    changes: { [A]: { title: 'Alpha' } },
+    records: [
+      usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+      usageRecord({ change: A, at: at(2), from: 'draft', to: 'approved', sessions: [s1(300)] }),
+    ],
+  });
+  const { code, out, err } = analyze('--json');
+  assert.equal(code, 0, err);
+  assert.deepEqual(
+    JSON.parse(out).hints.filter((h) => h.startsWith('skipped:')),
+    [],
+    out,
+  );
+});

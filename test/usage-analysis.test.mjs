@@ -1230,3 +1230,96 @@ test('20261012-125617 CR3: a record whose at is not text closes no segment and i
   const result = analyzeUsage({ changes: [changeDoc(A)], usage }, { id: A });
   assert.deepEqual(segmentTotals(only(result)), []);
 });
+
+// 20261012-141915: a record the analysis cannot place is announced, once, for
+// the whole ledger. Entries are built by hand because the helper derives the
+// file name from `at`.
+const SKIPPED = (n) =>
+  `skipped: ${n} usage record(s) in the ledger cannot be placed; changeledger check reports why`;
+const rawEntry = (record) => ({
+  file: null,
+  name: `${record.change}--raw.json`,
+  change: record.change,
+  record,
+  error: null,
+});
+const skippedHints = (result) => result.hints.filter((h) => h.startsWith('skipped:'));
+
+test('20261012-141915 CR1: a record that cannot be placed is announced in hints', () => {
+  const usage = [
+    usageEntryOf(
+      usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+    ),
+    rawEntry(usageRecord({ change: A, at: 123, from: 'draft', to: 'approved' })),
+  ];
+  const result = analyzeUsage({ changes: [changeDoc(A)], usage }, { id: A });
+  assert.deepEqual(skippedHints(result), [SKIPPED(1)]);
+});
+
+test('20261012-141915 CR1: the count covers the whole ledger, not the requested change, and every kind of unplaceable record', () => {
+  const valid = usageEntryOf(
+    usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+  );
+  const unplaceable = [
+    rawEntry(usageRecord({ change: B, at: 'ayer', from: 'draft', to: 'approved' })),
+    rawEntry({ ...usageRecord({ change: B, at: at(2) }), schema: 2 }),
+    rawEntry({ ...usageRecord({ change: B, at: at(3) }), change: null }),
+    { file: null, name: 'broken.json', change: null, record: null, error: 'unreadable' },
+  ];
+  const usage = [valid, ...unplaceable];
+  const input = { changes: [changeDoc(A), changeDoc(B)], usage };
+  for (const options of [{ id: A }, { ids: [A] }, {}]) {
+    assert.deepEqual(
+      skippedHints(analyzeUsage(input, options)),
+      [SKIPPED(4)],
+      JSON.stringify(options),
+    );
+  }
+});
+
+test('20261012-141915 CR1: the skipped hint comes after the other hints', () => {
+  const usage = [
+    usageEntryOf(
+      usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+    ),
+    rawEntry(usageRecord({ change: A, at: 123, from: 'draft', to: 'approved' })),
+  ];
+  const { hints } = analyzeUsage({ changes: [changeDoc(A)], usage }, {});
+  assert.ok(hints.length > 1, hints.join('\n'));
+  assert.equal(hints.at(-1), SKIPPED(1));
+});
+
+test('20261012-141915 CR2: an at that is not an ISO UTC instant closes no segment, is not counted and is announced', () => {
+  const valid = usageEntryOf(
+    usageRecord({ change: A, at: at(1), event: 'created', to: 'draft', sessions: [s1(100)] }),
+  );
+  const badAts = [
+    'ayer',
+    '2026-10-01T00:02:00+00:00',
+    '2026-10-01 00:02:00Z',
+    '2026-10-01T00:02:00.000Z',
+    ['2026-10-01T00:02:00Z'],
+  ];
+  for (const badAt of badAts) {
+    const usage = [
+      valid,
+      rawEntry(
+        usageRecord({ change: A, at: badAt, from: 'draft', to: 'approved', sessions: [s1(900)] }),
+      ),
+    ];
+    const label = JSON.stringify(badAt);
+    assert.deepEqual([...usageRecordCounts(usage)], [[A, 1]], label);
+    const result = analyzeUsage({ changes: [changeDoc(A)], usage }, { id: A });
+    assert.deepEqual(segmentTotals(only(result)), [], label);
+    assert.deepEqual(skippedHints(result), [SKIPPED(1)], label);
+  }
+});
+
+test('20261012-141915 CR3: records that all place add no skipped hint', () => {
+  const usage = cr1Records().map(usageEntryOf);
+  for (const options of [{ id: A }, {}]) {
+    const result = analyzeUsage({ changes: [changeDoc(A)], usage }, options);
+    assert.deepEqual(skippedHints(result), [], JSON.stringify(options));
+  }
+  assert.deepEqual(skippedHints(analyzeUsage({ changes: [], usage: [] })), []);
+});
