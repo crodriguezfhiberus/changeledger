@@ -3838,6 +3838,56 @@ test('20261002-133728 CR4: a record missing change or schema names the missing f
   }
 });
 
+// --- 20261012-125617 CR1/CR2: check validates the instant of a usage record ---
+
+const AT_CHECK_ID = USAGE_CHECK_ID;
+
+for (const layout of ['legacy', 'state ref']) {
+  test(`20261012-125617 CR1 (${layout}): a usage record without "at" fails check, named`, (t) => {
+    const name = `${AT_CHECK_ID}--20261002T153240Z-0a1b2c50.json`;
+    const root = usageCheckRepo(t, layout, [
+      VALID_RECORD,
+      [name, usageRecordText(AT_CHECK_ID, undefined, { at: undefined })],
+    ]);
+    const { code, errors } = checkJson(root);
+    assert.notEqual(code, 0);
+    assert.deepEqual(
+      errors.map((e) => e.message),
+      [`usage record ${name}: missing "at"`],
+    );
+  });
+
+  for (const [label, at] of [
+    ['a number', 123],
+    ['a word', 'ayer'],
+  ]) {
+    test(`20261012-125617 CR2 (${layout}): a usage record whose "at" is ${label} fails check, named`, (t) => {
+      const name = `${AT_CHECK_ID}--20261002T153241Z-0a1b2c51.json`;
+      const root = usageCheckRepo(t, layout, [
+        VALID_RECORD,
+        [name, usageRecordText(AT_CHECK_ID, undefined, { at })],
+      ]);
+      const { code, errors } = checkJson(root);
+      assert.notEqual(code, 0);
+      assert.deepEqual(
+        errors.map((e) => e.message),
+        [`usage record ${name}: at must be an ISO 8601 UTC instant, got ${JSON.stringify(at)}`],
+      );
+    });
+  }
+}
+
+test('20261012-125617 CR2: a usage record "at" is accepted in the form the collector writes', (t) => {
+  // The Log instant `YYYY-MM-DDTHH:MM:SSZ`, as the ledger's own records carry it.
+  const root = usageCheckRepo(t, 'legacy', [
+    [
+      `${AT_CHECK_ID}--20261002T153242Z-0a1b2c52.json`,
+      usageRecordText(AT_CHECK_ID, '2026-10-02T15:32:42Z'),
+    ],
+  ]);
+  assert.deepEqual(checkJson(root).errors, []);
+});
+
 // --- 20261002-161641: check over a collection this CLI does not know ---------
 
 function futureCheckRepo(t, extra) {
