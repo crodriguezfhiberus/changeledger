@@ -23,6 +23,7 @@ import {
   invalidateCache,
   normalizeRepoState,
   restoreViewerState,
+  selectedRepo,
   selectProject,
   setDetailPresentation,
   setLedgerCategory,
@@ -212,6 +213,7 @@ export function load(requestRepo = getRepo, applyRepo = applyLoadedRepo, { polli
       if (hasProjectProvenance(e.payload) && !matchesProjectProvenance(e.payload, target))
         return false;
       state.loadError = e.message;
+      dropForeignProjectShell();
       if (state.currentView !== 'projects') paintLoadError();
       return false;
     }
@@ -230,10 +232,22 @@ function applyLoadedRepo(text) {
 const noProjectsMessage = () =>
   html`<p class="empty" style="padding:20px">No projects registered. Run <code>changeledger init</code> in a repo.</p>`;
 
+const loadingProjectMessage = () =>
+  html`<p class="empty" style="padding:20px">Loading project…</p>`;
+
 function paintLoadError(message = state.loadError) {
   const root = $(`#${state.currentView}`);
   if (state.currentView === 'ledger') renderLedgerRouteError(root, message);
   else litRender(html`<p style="color:var(--bug);padding:20px">${message}</p>`, root);
+}
+
+// `selectProject` keeps the previous project's payload; while the selected one
+// is not loaded, the filter menus and the invalid-documents warning stop
+// showing that payload's values.
+function dropForeignProjectShell() {
+  if (selectedRepo()) return;
+  hydrateFilters();
+  renderChangeErrors([]);
 }
 
 export function showNoProjects(root = document) {
@@ -269,14 +283,17 @@ function renderChangeErrors(errors = [], root = document) {
   );
 }
 
-// Rebuilt on each project load (types/statuses can differ per project).
+// Rebuilt on each project load (types/statuses can differ per project), and on
+// a failed load of a project whose payload is not held, so the menus stop
+// listing the previous project's types, owners and statuses.
 function hydrateFilters() {
-  $('#lang').textContent = state.repo.language;
-  const owners = [...new Set(state.repo.changes.map((c) => c.owner).filter(Boolean))].sort();
+  const repo = selectedRepo();
+  $('#lang').textContent = repo?.language ?? '';
+  const owners = [...new Set((repo?.changes ?? []).map((c) => c.owner).filter(Boolean))].sort();
   renderChoiceFilter(
     $('#type-filter'),
     'Type',
-    state.repo.types,
+    repo?.types ?? [],
     state.filters.types,
     toggleTypeFilter,
     clearTypeFilters,
@@ -290,7 +307,7 @@ function hydrateFilters() {
     clearOwnerFilters,
     true,
   );
-  renderStatusFilter();
+  renderStatusFilter(repo?.statuses ?? []);
 }
 
 export function choiceFilterSummary(label, selected, includeUnassigned = false) {
@@ -344,8 +361,9 @@ export function renderChoiceFilter(host, label, choices, selected, toggle, clear
   };
 }
 
-export function renderStatusFilter() {
+export function renderStatusFilter(statuses = state.repo.statuses) {
   const sf = $('#status-filter');
+  const rerender = () => renderStatusFilter(statuses);
   const summary = state.filters.pendingGraduation
     ? state.filters.statuses.size
       ? `${state.filters.statuses.size + 1} selected`
@@ -363,7 +381,7 @@ export function renderStatusFilter() {
       <div class="filter-popover">
         <div class="filter-heading"><span>Status</span><button type="button" data-clear-status>Clear</button></div>
         <div class="filter-options">
-          ${boardStatuses(state.repo.statuses).map(
+          ${boardStatuses(statuses).map(
             (status) => html`<label class="check-option">
               <input type="checkbox" data-status=${status} .checked=${state.filters.statuses.has(status)} />
               <span class="check-box" aria-hidden="true"></span>
@@ -394,28 +412,28 @@ export function renderStatusFilter() {
   sf.querySelectorAll('[data-status]').forEach((input) => {
     input.onchange = () => {
       toggleStatusFilter(input.dataset.status);
-      renderStatusFilter();
+      rerender();
       render();
     };
   });
   sf.querySelector('[data-pending-graduation]').onchange = () => {
     togglePendingGraduation();
-    renderStatusFilter();
+    rerender();
     render();
   };
   sf.querySelector('[data-clear-status]').onclick = () => {
     clearStatusFilters();
-    renderStatusFilter();
+    rerender();
     render();
   };
   sf.querySelector('[data-visibility="archived"]').onchange = () => {
     toggleShowArchived();
-    renderStatusFilter();
+    rerender();
     render();
   };
   sf.querySelector('[data-visibility="discarded"]').onchange = () => {
     toggleShowDiscarded();
-    renderStatusFilter();
+    rerender();
     render();
   };
 }
@@ -425,16 +443,10 @@ function visibleChanges() {
 }
 
 function render() {
-  const failedLoad =
-    state.currentProject &&
-    state.loadError &&
-    (!state.repo || String(state.repo.project_id) !== String(state.currentProject));
-  if (failedLoad && state.currentView !== 'projects') {
-    paintLoadError();
-    return;
-  }
-  if (!state.repo && state.currentView !== 'projects') {
-    litRender(noProjectsMessage(), $(`#${state.currentView}`));
+  if (state.currentView !== 'projects' && !selectedRepo()) {
+    if (!state.currentProject) litRender(noProjectsMessage(), $(`#${state.currentView}`));
+    else if (state.loadError) paintLoadError();
+    else litRender(loadingProjectMessage(), $(`#${state.currentView}`));
     return;
   }
   if (state.currentView === 'graph') renderGraph();
@@ -2370,6 +2382,7 @@ export function activateView(v, { renderContent = true, historyMode = 'push' } =
 
 export async function selectViewerProject(nextProject, { loadProject = load } = {}) {
   selectProject(nextProject);
+  dropForeignProjectShell();
   openedSpecName = null;
   ledgerBrowser.clearSelection();
   const selector = $('#project');

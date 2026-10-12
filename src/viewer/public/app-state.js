@@ -208,6 +208,14 @@ export function normalizeRepoState(repo) {
   persistViewerState();
 }
 
+// The loaded payload when it belongs to the selected project, else null:
+// `selectProject` keeps the previous project's payload in `state.repo`.
+export function selectedRepo() {
+  return state.repo && String(state.repo.project_id) === String(state.currentProject)
+    ? state.repo
+    : null;
+}
+
 export function setRepo(json) {
   state.lastJson = json;
   state.repo = JSON.parse(json);
