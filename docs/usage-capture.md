@@ -223,7 +223,11 @@ otherwise.
   before the closing record, or `unknown`.
 
 Hints state facts without thresholds: `rework`, `unpriced`, `anomaly`,
-`baseline`, `unmeasured`, `failed` (records with `error`) and `gap`. A `gap`
+`baseline`, `unmeasured`, `failed` (records with `error`), `gap` and `skipped`.
+A `skipped` hint counts, over the whole ledger and whatever change was asked
+for, the records the analysis cannot place: unreadable or not an object, not
+`schema: 1`, without a `change`, or whose `at` is not a string in the
+`YYYY-MM-DDTHH:MM:SSZ` form. A `gap`
 hint counts the Log transitions of any change (`[status]`, `[review]`,
 `[validation]` and the creation in `created`) strictly between a segment's base
 (the recorder's previous record with data) and its closing record that have no
