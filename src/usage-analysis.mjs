@@ -60,7 +60,7 @@ function chainOrder(group) {
 // The records the analysis can place: readable, `schema: 1`, naming a
 // `change` and with a string `at`. The rest are skipped here; `check` reports
 // an unreadable record, a wrong `schema`, a missing `change`, and an `at` that
-// is missing or not an ISO UTC instant.
+// is missing or not in the `YYYY-MM-DDTHH:MM:SSZ` form.
 const isPlaceable = (entry) => {
   const record = entry?.record;
   return !(
