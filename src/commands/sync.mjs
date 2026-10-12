@@ -11,6 +11,17 @@
 // CAS), local ahead (push), diverged (both moved). Only after that comparison
 // does anything get written.
 //
+// Before it adopts the remote revision it checks, in this order: the minimum
+// CLI version that revision declares (`assertCliAdmitted`); for a divergence,
+// that no document changed differently on both sides (`reconcile`); then the
+// store primitive that moves the ref validates the tree it would adopt —
+// `advanceStateRef` for a fast-forward, `commitMergedState` for a
+// reconciliation, each documenting its own guards. Among them, from
+// 20261012-141809, the tree must keep each path of the local tip and the
+// blob of each of its usage records; that check runs before a merge commit is
+// created. Each of these checks throws before the local ref moves or anything
+// is pushed. Publishing a local tip that is ahead runs none of them.
+//
 // It is never blocking. No remote, no remote ref, an unreachable remote or a
 // checkout that is not activated are informative no-ops with exit 0: no other
 // command consults `sync`, waits for it, or changes behavior when it has never
@@ -20,6 +31,7 @@
 
 import path from 'node:path';
 import { findChangeledgerDir } from '../config.mjs';
+import { VERSION } from '../framing.mjs';
 import { capturedRun, isAncestor } from '../git.mjs';
 import { treeEntries } from '../git-batch.mjs';
 import {
@@ -31,6 +43,7 @@ import {
   STATE_REF,
   STATE_ROOT,
 } from '../state-store.mjs';
+import { assertCliAdmitted } from '../version-guard.mjs';
 
 // The branch name the state ref carries inside `refs/heads/`, and therefore the
 // suffix of its remote-tracking copy under `refs/remotes/<remote>/`.
@@ -107,6 +120,7 @@ const COLLECTION_CLASSES = new Map([
   ['changes', 'change'],
   ['specs', 'spec'],
   ['releases', 'release'],
+  ['usage', 'usage record'],
 ]);
 
 // The class of a state path, for a human reading the report: the collection it
@@ -273,6 +287,7 @@ export function sync(
   cwd = process.cwd(),
   output = console,
   run = capturedRun,
+  installedVersion = VERSION,
 ) {
   const changeledgerDir = findChangeledgerDir(cwd);
   if (!changeledgerDir) {
@@ -329,6 +344,12 @@ export function sync(
   if (relation === 'identical') {
     output.log(`Already in sync with "${remote}" at ${local}.`);
     return 0;
+  }
+  // The `preAction` guard compared the local config. A fast-forward or a
+  // reconciliation makes the remote revision part of the ledger, so its own
+  // minimum is compared before the local ref moves or a merge commit exists.
+  if (relation === 'behind' || relation === 'diverged') {
+    assertCliAdmitted(repoRoot, tracked, installedVersion, run);
   }
   if (relation === 'behind') {
     advanceStateRef(repoRoot, { expectedRevision: local, revision: tracked }, run);
