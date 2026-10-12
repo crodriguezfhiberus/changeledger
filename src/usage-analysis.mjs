@@ -58,9 +58,8 @@ function chainOrder(group) {
 }
 
 // The records the analysis can place: readable, `schema: 1`, naming a
-// `change` and with a string `at`. The rest are skipped here; `check` reports
-// an unreadable record, a wrong `schema`, a missing `change`, and an `at` that
-// is missing or not in the `YYYY-MM-DDTHH:MM:SSZ` form.
+// `change` and with an `at` in the `YYYY-MM-DDTHH:MM:SSZ` form that `check`
+// requires. The rest are skipped here and counted in the `skipped:` hint.
 const isPlaceable = (entry) => {
   const record = entry?.record;
   return !(
@@ -68,7 +67,8 @@ const isPlaceable = (entry) => {
     !isMapping(record) ||
     record.schema !== 1 ||
     record.change == null ||
-    typeof record.at !== 'string'
+    typeof record.at !== 'string' ||
+    !isIsoUtc(record.at)
   );
 };
 
@@ -497,6 +497,15 @@ export function analyzeUsage({ changes = [], usage = [] } = {}, { id, ids, by } 
         );
       }
     }
+  }
+
+  // Counted over the whole ledger, also with `id` or `ids`: a record without a
+  // valid `change` cannot be tied to the change asked for.
+  const skipped = (usage ?? []).filter((entry) => !isPlaceable(entry)).length;
+  if (skipped > 0) {
+    hints.push(
+      `skipped: ${skipped} usage record(s) in the ledger cannot be placed; changeledger check reports why`,
+    );
   }
 
   return {
